@@ -1,0 +1,277 @@
+
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <title>Programming II ( COMP1206 )</title>
+  <link  href = "advprog.css" rel = "stylesheet" type = "text/css">
+</head>
+
+<body>
+
+<div class="header">
+<h1>COMP1206 Programming II Lecture Notes</h1>
+<h1>Semester Two, 2018</h1>
+<home><a href="index.html">Home</a></home>
+</div>
+
+<div class="notes">
+
+<h2>COMP1206 Programming II - Assignment Two</h2>
+
+
+<blockquote>
+<part>(Submission Deadline: 4pm, Friday 18th May 2018)</part>
+</blockquote>
+
+
+
+
+
+<p>
+Please direct any queries regarding these instructions to Oliver Bills (ofb@ecs.soton.ac.uk).
+</p>
+
+<h2>Assignment Instructions: A Sushi Preparation and Delivery System.</h2>
+
+<p>
+A new sushi delivery business has just been opened in a busy university city. This business keeps stocks of ingredients sourced from local suppliers and uses these to prepare different types of sushi dishes. Each of these sushi dishes is prepared according to a recipe that specifies which ingredients (and how much) to use. Due to significant and predictable demand from the student population, the business also keeps stocks of prepared sushi. Stocks of ingredients and prepared sushi are always kept at specific minimum target levels set by the business. 
+</p>
+<p>
+What sets this business apart from other similar competitors is a fleet of delivery drones (small autonomous aerial vehicles). These fulfil two purposes: they deliver prepared sushi dishes to the customers and they collect new ingredients when stocks are low.
+</p>
+<p>
+Your objective in this coursework is to implement an inventory and delivery management system for the sushi business. This will keep track of stocks of ingredients and the sushi that has been prepared from these ingredients. It will also manage the fleet of drones for delivering sushi and restocking ingredients. Finally, you will implement a client application that customers can use to view the range of sushi on offer, to place orders and to view the progress of their order.
+</p>
+
+<h2>Structure and Requirements</h2>
+<p>You are provided with some base code to support your application, which you will work with throughout your implementation. These classes exist in 3 packages (groups of similar classes): client (classes related only to the client application), server (classes related only to the backend server application) and common (classes shared between the client and server, primarily models). You must not change these packages or the packages the provided classes belong to. However, you may choose to add your own packages if you wish for your own classes.</p>
+
+<p>Note: You can find more about packages <a href="https://docs.oracle.com/javase/tutorial/java/package/packages.html">here</a>. Briefly, the package a class exists in is specified at the top of a class file, prefixed by the package keyword (for example, package common). The packages also match a folder structure, so files in the common package exist in the common folder inside the source.</p>
+
+<p>The provided source code files are given below alongside the instructions, but can also be downloaded as a <a href="cw2/src.zip">zip file</a> in one go.</p>
+
+<p>By the end of your implementation, you must provide 2 classes in the default package (no folder) named <strong>ServerApplication</strong> and <strong>ClientApplication</strong> which each have a main method that launches the respective application.</p>
+
+<exno>Part One (Ingredients, Suppliers and Sushi Dishes)</exno>
+
+<p>
+Write classes to represent ingredients, their local suppliers and sushi dishes. Each class must extend the provided abstract <a href="cw2/Model.java">Model</a> class. You <em>must not</em> modify the Model class, although you may extend it.
+</p>
+
+<p>An ingredient should have a name, a unit in which its quantity is typically measured (such as grams or litres) and a supplier. The supplier has a name and a distance to the sushi business. You can assume each ingredient is sold by exactly one supplier, and one supplier could sell multiple ingredients. Each sushi dish has a name, a description, a price and a set of required ingredients and corresponding quantities (its recipe).
+</p>
+
+<p>Different parts of the application will need to be aware of when changes to models occur. You should ensure to make use of the <strong>notifyUpdate</strong> methods extended from Model when any property is changed on each model. You will need the <a href="cw2/UpdateListener.java">UpdateListener</a> and <a href="cw2/UpdateEvent.java">UpdateEvent</a> classes to support this.</p>
+
+<p>At the minimum, you should provide classes named and for the following: <strong>Dish</strong>, <strong>Ingredient</strong> and <strong>Supplier</strong>.</p>
+
+<exno>Part Two (Stock Management)</exno>
+
+<p>
+Write appropriate classes to keep track of ingredients and prepared dishes that are currently held in stock by the business. For each ingredient and dish, there should be a restocking threshold (at which restocking occurs) and a restocking amount. Falling below this level means that new ingredients should be ordered or new dishes should be prepared (you will implement this in a later part).
+</p>
+
+<exno>Part Three (Kitchen Staff)</exno>
+
+<p>
+Write a <strong>Staff</strong> class that represents a member of the kitchen staff and that can be run as a Java Thread and extends the base <strong>Model</strong> class.</p>
+
+<p>When running, an instance of this thread should monitor the stock levels of dishes. Should any fall below their restocking levels and there are sufficient ingredients to satisfy the recipe of the dish, the thread should prepare a new dish (using up the required ingredients). This should take a random amount of time between some specified lower and upper bounds (for example 20-60 seconds). Make sure all your classes are synchronized appropriately, so that multiple kitchen staff threads can operate concurrently.
+</p>
+
+<p>A staff member should be able to return a text status which indicates its current job. If the staff member is performing no action, this should simply return "Idle".</p>
+
+<exno>Part Four (Communication Layer)</exno>
+
+<p>
+Write a Comms class (and related classes, if required) that will handle communication between the business (stock management) application and the client applications. Provide a 'sendMessage' method (or methods) that allows each client to send a message object to the business application and the business application to send a message to a specific client. The applications will also need to 
+check for incoming messages by calling a 'receiveMessage' method (or methods) of the Comms class. The types of these may vary depending on the types of message being sent/received.
+</p>
+<p>
+For the purposes of this assignment, you may assume that the business and client applications run on the same machine (but in separate JVMs) and communication may be achieved by making use of the local filesystem. For example, messages sent by the business can be stored in 'mailbox' style file(s)/folder(s) dedicated to a particular client. A separate file/folder could be used for the business application.
+</p>
+<p>
+If you prefer you may use Socket communication in the Comms class instead of files.   In either case,  the business and client applications should be oblivious to the actual communication mechanism used. That is, all I/O operations must reside in the Comms class. Access to them is only allowed via your send/receive methods above.
+</p>
+
+
+<exno>Part Five (Client)</exno>
+
+<p>Your user interface designer has provided you with a fully functional client application user interface, <a href="cw2/ClientWindow.java">ClientWindow</a> that communicates with your application using an interface. 
+ By implementing the interface correctly, the user interface will work directly with your system without you needing to make any changes or build a user interface yourself.</p>
+
+<p>
+Write a client class which implements the <a href="cw2/ClientInterface.java">ClientInterface</a> interface, that customers can use to order sushi from the business. When implemented correctly, new users should be able to register with a username, password, an address, and a choice from a list of pre-defined postcodes that are served by the business. Existing users should be able to log in with their previously chosen username and password.
+</p>
+
+<p>
+When logged in, the application should show all available dishes, including current stock levels. Customers should be able to add/remove dishes to/from a shopping basket, view the current total price and place their order. They should also be able to see the status of current and previous orders.
+</p>
+<p>
+Communication with the business application (for example to register users, to retrieve available dishes and place orders) should be implemented using the Comms class and appropriate message types.
+</p>
+
+<p>To facilitate this, you will need to create <strong>Order</strong>, <strong>User</strong> and <strong>Postcode</strong> classes, which extend from Model.</p>
+
+<p>Your client implementation must correctly implement a listener interface for <a href="cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the client implementation which cause a model change, the <strong>notifyUpdate</strong> method on the client implementation must be called, to inform the user interface of the updates.</p>
+
+<p>Once you have completed your implementation of the ClientInterface interface, you can create a new ClientWindow passing in your implementation of the interface to the constructor.</p>
+
+<p>You must create a <strong>ClientApplication</strong> class in the default package (no folder) which has the following:
+<ul>
+  <li>an initialise() method which takes no parameters and which prepares anything necessary for your implementation and returns the implementation of ClientInterface,</li>
+  <li>a launchGUI(clientInterface) method which launches the GUI by creating a ClientWindow given the implementation of the ClientInterface,</li>
+  <li>a main() method which calls initialise and then launchGUI. It should not do anything else,</li>
+  <li>Running ClientApplication will launch the client.</li>
+</ul>
+
+<exno>Part Six (Drones)</exno>
+
+<p>Write a <strong>Drone</strong> class which extends the base <strong>Model</strong> class that represents a delivery drone with a specific flying speed and that can be run as a Java Thread as part of the business application.</p>
+
+<p>A drone should monitor stock levels of ingredients. When these drop below their restocking levels, it should collect further ingredients from the appropriate supplier. The time it will take for this will depend on its speed and the distance to the supplier. When it is not collecting stocks, a drone can also deliver customer orders. You can assume a fixed distance for each customer postcode, and along with the speed of the drone, this will determine the delivery time. Again, ensure your classes are appropriately synchronized, so that multiple drones can run concurrently.
+</p>
+
+<p>A drone should be able to return a text status which indicates its current job. If the drone is performing no action, this should simply return "Idle".</p>
+
+<exno>Part Seven (Configuration)</exno>
+<p>Create a <strong>Configuration</strong> class which can parse configuration files in <a href="cw2/ConfigurationHelp.txt">a given format</a>. An example configuration is provided here: <a href="cw2/Configuration.txt">Example Configuration</a>.</p>
+
+<p>You can assume that in configuration files, the name uniquely identifies any given model, and that nothing will be specified before its dependencies have been specified.</p>
+
+<p>Your configuration class should take a configuration filename as a parameter and then set up the relevant models and state as specified by the configuration file. This will be called by the implementation of the server in the next section.</p>
+
+<exno>Part Eight (Server)</exno>
+
+<p>As with the client application, your user interface designer has implemented you a backend server user interface, <a href="cw2/ServerWindow.java">ServerWindow</a>, built to an interface. By implementing the interface correctly, the user interface will work directly with your system without you needing to make any changes or build a user interface yourself.</p>
+
+<p>By implementing the <a href="cw2/ServerInterface.java">ServerInterface</a> interface, write an application for the sushi business.</p>
+
+<p>Once the interface is implemented correctly, this should allow the user to:
+<ul>
+<li>view current stock levels (of ingredients and dishes),</li>
+<li>change restocking levels,</li>
+<li>change receipes of dishes,</li>
+<li>add or remove ingredients, suppliers and dishes,</li>
+<li>view the status of customer orders,</li>
+<li>remove specific orders (and cancel them if necessary),</li>
+<li>remove all completed orders,</li>
+<li>view the status of kitchen staff and drones, and</li>
+<li>add or remove kitchen staff and drones,</li>
+<li>load a configuration file.</li>
+</ul>
+
+The business application should also communicate with the client applications by listening to messages and sending appropriate responses. 
+</p>
+
+<p>The user interface for these functions is already provided by the ServerWindow class, but requires the implementation of the interface in the server to provide the logic.</p>
+
+<p>Your server implementation must correctly implement a listener interface for <a href="cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the server implementation which cause a model change, the <strong>notifyUpdate</strong> method must be called on the server implementation, to inform the user interface of the updates.</p>
+
+<p>Once you have completed your implementation of the ServerInterface, you can create a new ServerWindow passing in your implementation of the interface to the constructor.</p>
+
+<p>You must create a <strong>ServerApplication</strong> class in the default package (no folder) which has the following:
+<ul>
+  <li>an initialise() method which takes no parameters and which prepares anything necessary for your implementation and returns the implementation of ServerInterface,</li>
+  <li>a launchGUI(serverInterface) method which launches the GUI by creating a ServerWindow given the implementation of the ServerInterface,</li>
+  <li>a main() method which calls initialise and then launchGUI. It should not do anything else,</li>
+  <li>Running ServerApplication will launch the server.</li>
+</ul>
+
+<exno>Part Nine (Persistence Layer)</exno>
+
+<p>
+Provide a service class DataPersistence that provides functionality to ensure
+that all data stored in the system is stored
+on disk in case the business application needs
+to be restarted at some point. This should include user data, stocks, dishes and orders. You should store information about the kitchen staff and drones (but it is permissible to reset any partially completed activities).
+</p>
+<p>
+Modify your business and client application to make use of your DataPersistence class.
+</p>
+<p>When a specific configuration is loaded through the Configuration class, this should override all current persistence starting from a clean slate.</p>
+
+<exno>Good Practice</exno>
+
+<p>
+Make sure that your code is well organised, concise and well commented. 
+I will award one mark for well presented code that compiles as submitted.
+</p>
+
+<h2>Mark Scheme</h2>
+
+<p>
+In total there are 35 marks available, which will contribute
+35% towards your overall course mark. The breakdown of
+available marks is as follows:
+<ul> 
+ <li>Good practice: 1 Marks</li>
+ <li>Part One: 3 Marks</li>
+ <li>Part Two: 3 Marks</li>
+ <li>Part Three: 5 Marks</li>
+ <li>Part Four: 3 Marks</li>
+ <li>Part Five: 3 Marks</li>
+ <li>Part Six: 3 Marks</li>
+ <li>Part Seven: 5 Marks</li>
+ <li>Part Eight: 4 Marks</li>
+ <li>Part Nine: 5 Marks</li>
+</ul>
+</p>
+
+<h2>Frequently Asked Questions</h2>
+<p><strong>The user interface doesn't update after making changes</strong>?</p>
+<p>You must ensure you are currently making use of the UpdateListener functionality and notifying the ClientInterface, ServerInterface and Models of updates which occur. This will notify the user interface to update.</p>
+
+<p><strong>How do I prevent the deletion where it is not appropriate to delete it?</strong></p>
+<p>You can fire an UnableToDeleteException from your implementation which will be caught by the user interface appropriately.</p>
+
+<p><strong>Can I modify the ServerWindow or ClientWindow to make them work with my code?</strong></p>
+<p>You should be able to make the interfaces work directly from your code in the implementations. There should be no need to modify the Window classess to make it work with your code.</p>
+
+<p><strong>Can I modify the ServerInterface or ClientInterface?</strong><p>
+<p>There should be no reason to modify these interfaces. See the question below.</p>
+
+<p><strong>I'm having problems making the interface work, or I feel I need to make changes to the provided code</strong></p>
+<p>Please contact ofb@ecs.soton.ac.uk</p>
+
+<p><strong>Do I have to use the packages given with the provided classes?</strong></p>
+<p>You may use other packages for your classes, but you must keep the package names for the provided classes.</p>
+
+<p><strong>Any other questions?</strong><p>
+<p>Please contact ofb@ecs.soton.ac.uk</p>
+
+<h2>Additional Information</h2>
+
+<p>
+<b>Submission Information</b>:<br/>
+<br/>
+Please place of all of your source files in to a single directory and make a zip archive of it.
+Please do not use RAR archiver and <b>do not include any compiled bytecode</b> (i.e.  .class files ).
+You should submit your zipped directory. 
+</p>
+<p>
+You should use the automated ECS hand-in facilities found at:
+<example>
+<a href="https://handin.ecs.soton.ac.uk">https://handin.ecs.soton.ac.uk</a>
+</example>
+</p>
+
+<p>
+<b>Originality of work</b>:<br/><br/>
+Please be aware of and adhere to 
+the University regulations on collusion and plagiarism, as outlined in
+the University Calendar on Academic Integrity.
+<example>
+<a href="http://www.calendar.soton.ac.uk/sectionIV/academic-integrity-statement.html">http://www.calendar.soton.ac.uk/sectionIV/</a>
+</example>
+
+</p>
+
+</div><div class="footer">
+Pages maintained by Sebastian Stein and the module team. Original material by Julian Rathke.
+</div>
+</body> 
+</html>
