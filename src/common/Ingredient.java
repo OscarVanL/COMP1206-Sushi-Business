@@ -1,15 +1,20 @@
+package common;
+
 import common.Model;
 import common.UpdateListener;
 
 import java.util.Collection;
 
-public class Supplier extends Model {
+public class Ingredient extends Model {
 
-    private float distance;
+    private String measurementUnit;
+    private Supplier supplier;
+    private float restockThreshold;
 
-    public Supplier(String name, float distance) {
+    public Ingredient(String name, String unit, Supplier supplier) {
         super.setName(name);
-        this.distance = distance;
+        this.measurementUnit = unit;
+        this.supplier = supplier;
     }
 
     @Override
@@ -27,6 +32,15 @@ public class Supplier extends Model {
         super.setName(name);
     }
 
+    public void setMeasurementUnit(String measurementUnit) {
+        notifyUpdate("unit",this.measurementUnit, measurementUnit);
+        this.measurementUnit = measurementUnit;
+    }
+
+    public void setSupplier(Supplier newSupplier) {
+        notifyUpdate("supplier",this.supplier, newSupplier);
+        this.supplier = newSupplier;
+    }
     @Override
     public void addUpdateListener(UpdateListener listener) {
         super.addUpdateListener(listener);

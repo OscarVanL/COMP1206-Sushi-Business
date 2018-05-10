@@ -1,22 +1,17 @@
+package common;
+
 import common.Model;
 import common.UpdateListener;
 
 import java.util.Collection;
-import java.util.List;
 
-public class Dish extends Model {
+public class Supplier extends Model {
 
-    private String dishDescription;
-    //Price stored as int (multiplied by 100) to avoid floating point problems (eg: £3.50 != £3.500000001)
-    private int intPrice;
-    private List<IngredientAmount> ingredientAmounts;
+    private float distance;
 
-    private Dish(String dishName, String dishDescription, float price, List<IngredientAmount> ingredients) {
-        super.setName(dishName);
-        this.dishDescription = dishDescription;
-        //Prices can be given as floats, but they are multiplied by 100 to store them as integers. Eg: 1.50 becomes 150.
-        this.intPrice = Math.round(price * 100);
-        this.ingredientAmounts = ingredients;
+    public Supplier(String name, float distance) {
+        super.setName(name);
+        this.distance = distance;
     }
 
     @Override
@@ -34,9 +29,8 @@ public class Dish extends Model {
         super.setName(name);
     }
 
-    public void setPrice(float price) {
-        notifyUpdate("price",(float)this.intPrice/100, price);
-        this.intPrice = Math.round(price * 100);
+    public void setDistance(float distance) {
+        this.distance = distance;
     }
 
     @Override

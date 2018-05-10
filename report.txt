@@ -1,0 +1,93 @@
+Part 1: Ingredients, Suppliers and Sushi Dishes
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 2: Stock Management 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 3: Kitchen Staff 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 4: Communication Layer 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 5: Client 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 6: Drones 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 7: Configuration 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 8: Server 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Part 9: Persistence 
+
+List of classes implemented (written as package.class)
+
+List of methods implemented (written as package.class.method):
+
+1 paragraph description of what you did:
+
+-----------------
+
+Assumptions made:
+
+Any other comments:

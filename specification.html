@@ -1,12 +1,9 @@
-
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-<html xmlns="http://www.w3.org/1999/xhtml"> 
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0059)https://secure.ecs.soton.ac.uk/notes/comp1206/cw2-2018.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <title>Programming II ( COMP1206 )</title>
-  <link  href = "advprog.css" rel = "stylesheet" type = "text/css">
+  <link href="./specification_files/advprog.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
@@ -14,7 +11,7 @@
 <div class="header">
 <h1>COMP1206 Programming II Lecture Notes</h1>
 <h1>Semester Two, 2018</h1>
-<home><a href="index.html">Home</a></home>
+<home><a href="https://secure.ecs.soton.ac.uk/notes/comp1206/index.html">Home</a></home>
 </div>
 
 <div class="notes">
@@ -51,28 +48,31 @@ Your objective in this coursework is to implement an inventory and delivery mana
 
 <p>Note: You can find more about packages <a href="https://docs.oracle.com/javase/tutorial/java/package/packages.html">here</a>. Briefly, the package a class exists in is specified at the top of a class file, prefixed by the package keyword (for example, package common). The packages also match a folder structure, so files in the common package exist in the common folder inside the source.</p>
 
-<p>The provided source code files are given below alongside the instructions, but can also be downloaded as a <a href="cw2/src.zip">zip file</a> in one go.</p>
+<p>The provided source code files are given below alongside the instructions, but can also be downloaded as a <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/src.zip">zip file</a> in one go.</p>
 
 <p>By the end of your implementation, you must provide 2 classes in the default package (no folder) named <strong>ServerApplication</strong> and <strong>ClientApplication</strong> which each have a main method that launches the respective application.</p>
 
 <exno>Part One (Ingredients, Suppliers and Sushi Dishes)</exno>
 
 <p>
-Write classes to represent ingredients, their local suppliers and sushi dishes. Each class must extend the provided abstract <a href="cw2/Model.java">Model</a> class. You <em>must not</em> modify the Model class, although you may extend it.
+Write classes to represent ingredients, their local suppliers and sushi dishes. Each class must extend the provided abstract <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/Model.java">Model</a> class. You <em>must not</em> change what is provided in the Model class, although you may add to it or extend it.
 </p>
 
 <p>An ingredient should have a name, a unit in which its quantity is typically measured (such as grams or litres) and a supplier. The supplier has a name and a distance to the sushi business. You can assume each ingredient is sold by exactly one supplier, and one supplier could sell multiple ingredients. Each sushi dish has a name, a description, a price and a set of required ingredients and corresponding quantities (its recipe).
 </p>
 
-<p>Different parts of the application will need to be aware of when changes to models occur. You should ensure to make use of the <strong>notifyUpdate</strong> methods extended from Model when any property is changed on each model. You will need the <a href="cw2/UpdateListener.java">UpdateListener</a> and <a href="cw2/UpdateEvent.java">UpdateEvent</a> classes to support this.</p>
+<p>Different parts of the application will need to be aware of when changes to models occur. You should ensure to make use of the <strong>notifyUpdate</strong> methods extended from Model when any property is changed on each model. You will need the <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/UpdateListener.java">UpdateListener</a> and <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/UpdateEvent.java">UpdateEvent</a> classes to support this.</p>
 
 <p>At the minimum, you should provide classes named and for the following: <strong>Dish</strong>, <strong>Ingredient</strong> and <strong>Supplier</strong>.</p>
 
+<a name="two"></a>
 <exno>Part Two (Stock Management)</exno>
 
 <p>
 Write appropriate classes to keep track of ingredients and prepared dishes that are currently held in stock by the business. For each ingredient and dish, there should be a restocking threshold (at which restocking occurs) and a restocking amount. Falling below this level means that new ingredients should be ordered or new dishes should be prepared (you will implement this in a later part).
 </p>
+
+<p>Once the stock of an ingredient or dish falls below the restock threshold, then they are restocked up until the stock reaches the restock threshold + the restock amount. For example, if the threshold is 10 and the restock amount is 10 and the item reaches 9, it will be restocked up to 20. If the restock amount is 0, it will be restocked back purely to the threshold. To prevent restocking completely, the restock threshold should be set to 0.</p>
 
 <exno>Part Three (Kitchen Staff)</exno>
 
@@ -100,11 +100,11 @@ If you prefer you may use Socket communication in the Comms class instead of fil
 
 <exno>Part Five (Client)</exno>
 
-<p>Your user interface designer has provided you with a fully functional client application user interface, <a href="cw2/ClientWindow.java">ClientWindow</a> that communicates with your application using an interface. 
+<p>Your user interface designer has provided you with a fully functional client application user interface, <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/ClientWindow.java">ClientWindow</a> that communicates with your application using an interface. 
  By implementing the interface correctly, the user interface will work directly with your system without you needing to make any changes or build a user interface yourself.</p>
 
 <p>
-Write a client class which implements the <a href="cw2/ClientInterface.java">ClientInterface</a> interface, that customers can use to order sushi from the business. When implemented correctly, new users should be able to register with a username, password, an address, and a choice from a list of pre-defined postcodes that are served by the business. Existing users should be able to log in with their previously chosen username and password.
+Write a client class which implements the <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/ClientInterface.java">ClientInterface</a> interface, that customers can use to order sushi from the business. When implemented correctly, new users should be able to register with a username, password, an address, and a choice from a list of pre-defined postcodes that are served by the business. Existing users should be able to log in with their previously chosen username and password.
 </p>
 
 <p>
@@ -116,12 +116,12 @@ Communication with the business application (for example to register users, to r
 
 <p>To facilitate this, you will need to create <strong>Order</strong>, <strong>User</strong> and <strong>Postcode</strong> classes, which extend from Model.</p>
 
-<p>Your client implementation must correctly implement a listener interface for <a href="cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the client implementation which cause a model change, the <strong>notifyUpdate</strong> method on the client implementation must be called, to inform the user interface of the updates.</p>
+<p>Your client implementation must correctly implement the addUpdateListener and notifyUpdate from the ClientInterface to support <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the client implementation which cause a model change, the <strong>notifyUpdate</strong> method on the client implementation must be called, to inform the user interface of the updates.</p>
 
 <p>Once you have completed your implementation of the ClientInterface interface, you can create a new ClientWindow passing in your implementation of the interface to the constructor.</p>
 
 <p>You must create a <strong>ClientApplication</strong> class in the default package (no folder) which has the following:
-<ul>
+</p><ul>
   <li>an initialise() method which takes no parameters and which prepares anything necessary for your implementation and returns the implementation of ClientInterface,</li>
   <li>a launchGUI(clientInterface) method which launches the GUI by creating a ClientWindow given the implementation of the ClientInterface,</li>
   <li>a main() method which calls initialise and then launchGUI. It should not do anything else,</li>
@@ -138,7 +138,7 @@ Communication with the business application (for example to register users, to r
 <p>A drone should be able to return a text status which indicates its current job. If the drone is performing no action, this should simply return "Idle".</p>
 
 <exno>Part Seven (Configuration)</exno>
-<p>Create a <strong>Configuration</strong> class which can parse configuration files in <a href="cw2/ConfigurationHelp.txt">a given format</a>. An example configuration is provided here: <a href="cw2/Configuration.txt">Example Configuration</a>.</p>
+<p>Create a <strong>Configuration</strong> class which can parse configuration files in <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/ConfigurationHelp.txt">a given format</a>. An example configuration is provided here: <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/Configuration.txt">Example Configuration</a>.</p>
 
 <p>You can assume that in configuration files, the name uniquely identifies any given model, and that nothing will be specified before its dependencies have been specified.</p>
 
@@ -146,12 +146,12 @@ Communication with the business application (for example to register users, to r
 
 <exno>Part Eight (Server)</exno>
 
-<p>As with the client application, your user interface designer has implemented you a backend server user interface, <a href="cw2/ServerWindow.java">ServerWindow</a>, built to an interface. By implementing the interface correctly, the user interface will work directly with your system without you needing to make any changes or build a user interface yourself.</p>
+<p>As with the client application, your user interface designer has implemented you a backend server user interface, <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/ServerWindow.java">ServerWindow</a>, built to an interface. By implementing the interface correctly, the user interface will work directly with your system without you needing to make any changes or build a user interface yourself.</p>
 
-<p>By implementing the <a href="cw2/ServerInterface.java">ServerInterface</a> interface, write an application for the sushi business.</p>
+<p>By implementing the <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/ServerInterface.java">ServerInterface</a> interface, write an application for the sushi business.</p>
 
 <p>Once the interface is implemented correctly, this should allow the user to:
-<ul>
+</p><ul>
 <li>view current stock levels (of ingredients and dishes),</li>
 <li>change restocking levels,</li>
 <li>change receipes of dishes,</li>
@@ -165,16 +165,16 @@ Communication with the business application (for example to register users, to r
 </ul>
 
 The business application should also communicate with the client applications by listening to messages and sending appropriate responses. 
-</p>
+<p></p>
 
 <p>The user interface for these functions is already provided by the ServerWindow class, but requires the implementation of the interface in the server to provide the logic.</p>
 
-<p>Your server implementation must correctly implement a listener interface for <a href="cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the server implementation which cause a model change, the <strong>notifyUpdate</strong> method must be called on the server implementation, to inform the user interface of the updates.</p>
+<p>Your server implementation must correctly implement the addUpdateListener and notifyUpdate from the ServerInterface to support <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/UpdateListener.java">UpdateListeners</a>. For any actions within the server implementation which cause a model change, the <strong>notifyUpdate</strong> method must be called on the server implementation, to inform the user interface of the updates.</p>
 
 <p>Once you have completed your implementation of the ServerInterface, you can create a new ServerWindow passing in your implementation of the interface to the constructor.</p>
 
 <p>You must create a <strong>ServerApplication</strong> class in the default package (no folder) which has the following:
-<ul>
+</p><ul>
   <li>an initialise() method which takes no parameters and which prepares anything necessary for your implementation and returns the implementation of ServerInterface,</li>
   <li>a launchGUI(serverInterface) method which launches the GUI by creating a ServerWindow given the implementation of the ServerInterface,</li>
   <li>a main() method which calls initialise and then launchGUI. It should not do anything else,</li>
@@ -201,13 +201,19 @@ Make sure that your code is well organised, concise and well commented.
 I will award one mark for well presented code that compiles as submitted.
 </p>
 
+<h2>Report</h2>
+
+<p>You must download and complete the <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2/report.txt">report.txt template</a> and provide this in addition to your source code.</p>
+
+<p>The summary should be no more than a paragraph per part, with the list of classes and methods implemented. This is unassessed but is here to help us mark your submission and ensure nothing is missed.</p>
+
 <h2>Mark Scheme</h2>
 
 <p>
 In total there are 35 marks available, which will contribute
 35% towards your overall course mark. The breakdown of
 available marks is as follows:
-<ul> 
+</p><ul> 
  <li>Good practice: 1 Marks</li>
  <li>Part One: 3 Marks</li>
  <li>Part Two: 3 Marks</li>
@@ -219,11 +225,14 @@ available marks is as follows:
  <li>Part Eight: 4 Marks</li>
  <li>Part Nine: 5 Marks</li>
 </ul>
-</p>
+<p></p>
 
 <h2>Frequently Asked Questions</h2>
 <p><strong>The user interface doesn't update after making changes</strong>?</p>
 <p>You must ensure you are currently making use of the UpdateListener functionality and notifying the ClientInterface, ServerInterface and Models of updates which occur. This will notify the user interface to update.</p>
+
+<p><strong>How should restocking work?</strong></p>
+<p>Please see <a href="https://secure.ecs.soton.ac.uk/notes/comp1206/cw2-2018.html#two">the section on restocking</a> which explains how the threshold and amount should be used.</p>
 
 <p><strong>How do I prevent the deletion where it is not appropriate to delete it?</strong></p>
 <p>You can fire an UnableToDeleteException from your implementation which will be caught by the user interface appropriately.</p>
@@ -231,8 +240,8 @@ available marks is as follows:
 <p><strong>Can I modify the ServerWindow or ClientWindow to make them work with my code?</strong></p>
 <p>You should be able to make the interfaces work directly from your code in the implementations. There should be no need to modify the Window classess to make it work with your code.</p>
 
-<p><strong>Can I modify the ServerInterface or ClientInterface?</strong><p>
-<p>There should be no reason to modify these interfaces. See the question below.</p>
+<p><strong>Can I modify the ServerInterface or ClientInterface?</strong></p><p>
+</p><p>There should be no reason to modify these interfaces. See the question below.</p>
 
 <p><strong>I'm having problems making the interface work, or I feel I need to make changes to the provided code</strong></p>
 <p>Please contact ofb@ecs.soton.ac.uk</p>
@@ -240,27 +249,27 @@ available marks is as follows:
 <p><strong>Do I have to use the packages given with the provided classes?</strong></p>
 <p>You may use other packages for your classes, but you must keep the package names for the provided classes.</p>
 
-<p><strong>Any other questions?</strong><p>
-<p>Please contact ofb@ecs.soton.ac.uk</p>
+<p><strong>Any other questions?</strong></p><p>
+</p><p>Please contact ofb@ecs.soton.ac.uk</p>
 
 <h2>Additional Information</h2>
 
 <p>
-<b>Submission Information</b>:<br/>
-<br/>
+<b>Submission Information</b>:<br>
+<br>
 Please place of all of your source files in to a single directory and make a zip archive of it.
 Please do not use RAR archiver and <b>do not include any compiled bytecode</b> (i.e.  .class files ).
-You should submit your zipped directory. 
+You should submit your zipped directory and report.txt file.
 </p>
 <p>
 You should use the automated ECS hand-in facilities found at:
 <example>
-<a href="https://handin.ecs.soton.ac.uk">https://handin.ecs.soton.ac.uk</a>
+<a href="https://handin.ecs.soton.ac.uk/">https://handin.ecs.soton.ac.uk</a>
 </example>
 </p>
 
 <p>
-<b>Originality of work</b>:<br/><br/>
+<b>Originality of work</b>:<br><br>
 Please be aware of and adhere to 
 the University regulations on collusion and plagiarism, as outlined in
 the University Calendar on Academic Integrity.
@@ -273,5 +282,6 @@ the University Calendar on Academic Integrity.
 </div><div class="footer">
 Pages maintained by Sebastian Stein and the module team. Original material by Julian Rathke.
 </div>
-</body> 
-</html>
+ 
+
+</body></html>
