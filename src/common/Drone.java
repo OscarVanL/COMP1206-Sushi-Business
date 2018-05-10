@@ -6,13 +6,14 @@ public class Drone extends Model implements Runnable {
     private int flyingSpeed;
 
     public Drone(int flyingSpeed) {
+        notifyUpdate("instantiation", null, this);
         this.setName("Drone");
         this.flyingSpeed = flyingSpeed;
     }
 
     @Override
     public String toString() {
-        return super.toString() + ": " + currentJobSummary;
+        return getName() + ": " + currentJobSummary;
     }
 
     @Override

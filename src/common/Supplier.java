@@ -10,6 +10,7 @@ public class Supplier extends Model {
     private float distance;
 
     public Supplier(String name, float distance) {
+        notifyUpdate("instantiation", null, this);
         super.setName(name);
         this.distance = distance;
     }
@@ -26,30 +27,20 @@ public class Supplier extends Model {
 
     @Override
     public void setName(String name) {
+        notifyUpdate("name", this.name, name);
         super.setName(name);
     }
 
     public void setDistance(float distance) {
+        notifyUpdate("distance", this.distance, distance);
         this.distance = distance;
     }
 
-    @Override
-    public void addUpdateListener(UpdateListener listener) {
-        super.addUpdateListener(listener);
-    }
-
-    @Override
-    public void addUpdateListeners(Collection<UpdateListener> listeners) {
-        super.addUpdateListeners(listeners);
-    }
-
-    @Override
-    public void notifyUpdate() {
-        super.notifyUpdate();
-    }
-
-    @Override
-    public void notifyUpdate(String property, Object oldValue, Object newValue) {
-        super.notifyUpdate(property, oldValue, newValue);
+    /**
+     * Returns the distance of the Supplier from the Sushi restaurant
+     * @return : Distance as a float
+     */
+    public float getDistance() {
+        return this.distance;
     }
 }

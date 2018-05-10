@@ -1,40 +1,63 @@
 package common;
 
-import common.Model;
-import common.UpdateListener;
-
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
-public class Dish extends Model {
+public class Dish extends Model implements Serializable {
 
     private String dishDescription;
-    //Price stored as int (multiplied by 100) to avoid floating point problems (eg: £3.50 != £3.500000001)
-    private int intPrice;
+    private long price;
     private HashMap<Ingredient, Float> ingredientAmounts = new HashMap<>();
 
-    private Dish(String dishName, String dishDescription, float price) {
+    private Dish(String dishName, String dishDescription, long price) {
         super.setName(dishName);
         this.dishDescription = dishDescription;
-        //Prices can be given as floats, but they are multiplied by 100 to store them as integers. Eg: 1.50 becomes 150.
-        this.intPrice = Math.round(price * 100);
+        this.price = price;
     }
 
     /**
-     * Used to add an ingredient to the dish along with the amount required
+     * Used to add an ingredient to the dish along with the amount required (if ingredient already exists, amount is updated)
      * @param ingredient : Ingredient object to add
      * @param amount : Units of this ingredient required
      */
     private void addIngredient(Ingredient ingredient, Float amount) {
         if (ingredientAmounts.containsKey(ingredient)) {
             System.out.println("Ingredient already present in dish. Amount required updated");
-            ingredientAmounts.replace(ingredient, amount);
+            setQuantity(ingredient, amount);
+        } else {
+            notifyUpdate("Ingredient added", null, ingredient);
+            ingredientAmounts.put(ingredient, amount);
         }
     }
 
-    public void setPrice(float price) {
-        notifyUpdate("price",(float)this.intPrice/100, price);
-        this.intPrice = Math.round(price * 100);
+    /**
+     * Used to change the amount of an ingredient required
+     * @param ingredient : Ingredient to update
+     * @param newQuantity : New quantity of ingredient required
+     */
+    public void setQuantity(Ingredient ingredient, Float newQuantity) {
+        if (ingredientAmounts.containsKey(ingredient)) {
+        notifyUpdate("Ingredient quantity updated", ingredientAmounts.get(ingredient), newQuantity);
+            ingredientAmounts.replace(ingredient, newQuantity);
+        }
+    }
+
+    /**
+     * Gets the price of one of this dish
+     * @return long : Price of one of this dish
+     */
+    public long getPrice() {
+        return this.price;
+    }
+
+    /**
+     * Assigns the price of the Dish
+     * @param price : Price of the dish as a float.
+     */
+    public void setPrice(long price) {
+        notifyUpdate("price",this.price, price);
+        this.price = price;
     }
 
     /**
@@ -44,6 +67,10 @@ public class Dish extends Model {
      */
     public float getQuantity(Ingredient ingredient) {
         return ingredientAmounts.get(ingredient);
+    }
+
+    public String getDishDescription() {
+        return this.dishDescription;
     }
 
     /**

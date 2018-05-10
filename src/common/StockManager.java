@@ -1,9 +1,5 @@
 package common;
 
-import common.Dish;
-import common.Ingredient;
-import common.StockItem;
-
 import java.util.HashMap;
 
 public class StockManager {
@@ -37,7 +33,12 @@ public class StockManager {
         }
     }
 
-    public Dish findDishToRestock() {
+    /**
+     * Finds any dishes that are below stock levels and returns them
+     * Synchronized so that it is thread safe, that is that multiple Staff won't get the same dish returned and both restock the same dish.
+     * @return Dish : Dish to restock.
+     */
+    public synchronized Dish findDishToRestock() {
         //Iterate through every dish we need to stock.
         for (Dish dish : dishStock.keySet()) {
             StockItem stock = dishStock.get(dish);
@@ -57,7 +58,7 @@ public class StockManager {
     /**
      * Checks if a chef is able to make the minimum quantity of a dish based on the amount of ingredients in stock
      * @param dish : Dish to check status for.
-     * @return
+     * @return boolean: True if chef can make the quantity with the ingredients available, False if not.
      */
     public boolean canMakeMinQuantity(Dish dish) {
         int dishesToMake = (int) dishStock.get(dish).getRestockAmount();
