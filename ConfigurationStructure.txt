@@ -1,0 +1,9 @@
+SUPPLIER:Name:Distance
+INGREDIENT:Name:Unit:Supplier:Restock Threshold:Restock Amount
+DISH:Name:Description:Price:Restock Threshold:Restock Amount:Quantity * Item,Quantity * Item...
+USER:Name:Password:Location:Postcode
+POSTCODE:Postcode:Distance
+STAFF:Name
+DRONE:Speed
+ORDER:User:Quantity * Dish
+STOCK:Dish|Ingredient:Quantity
