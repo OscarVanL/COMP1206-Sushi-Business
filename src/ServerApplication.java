@@ -1,25 +1,39 @@
 import common.*;
 import server.ServerInterface;
+import server.ServerWindow;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class ServerApplication implements ServerInterface {
 
+    private ServerWindow serverWindow;
+    CommsServer communication;
+
     public static void main(String args[]) {
-
         ServerInterface serverInterface = initialise();
-        launchGUI(serverInterface);
-
+        ServerApplication app = (ServerApplication) serverInterface;
+        ServerWindow window = app.launchGUI(serverInterface);
     }
 
-    static ServerInterface initialise() {
-        return null;
+    private static ServerInterface initialise() {
+        ServerApplication app = new ServerApplication();
+
+        try {
+            app.communication = new CommsServer(app, 5000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return app;
     }
 
-    static void launchGUI(ServerInterface serverInterface) {
-
+    ServerWindow launchGUI(ServerInterface serverInterface) {
+        ServerWindow window = new ServerWindow(serverInterface);
+        this.serverWindow = window;
+        return window;
     }
 
     @Override

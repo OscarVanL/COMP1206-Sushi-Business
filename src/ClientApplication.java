@@ -2,23 +2,37 @@ import client.ClientInterface;
 import client.ClientWindow;
 import common.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class ClientApplication implements ClientInterface {
 
+    private ClientWindow clientWindow;
+    CommsClient communication;
+
     public static void main(String args[]) {
         ClientInterface clientInterface = initialise();
-        launchGUI(clientInterface);
-
+        ClientApplication app = (ClientApplication) clientInterface;
+        ClientWindow window = app.launchGUI(clientInterface);
     }
 
-    static ClientInterface initialise() {
-        return null;
+    private static ClientInterface initialise() {
+        ClientApplication app = new ClientApplication();
+
+        try {
+            app.communication = new CommsClient(app, 5000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return app;
     }
 
-    static void launchGUI(ClientInterface clientInterface) {
+    ClientWindow launchGUI(ClientInterface clientInterface) {
         ClientWindow window = new ClientWindow(clientInterface);
+        this.clientWindow = window;
+        return window;
     }
 
     @Override
