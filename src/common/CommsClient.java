@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.util.List;
 import java.util.Queue;
 
+import static common.MessageType.*;
+
 public class CommsClient implements Comms {
 
     private ClientInterface client;
@@ -41,18 +43,20 @@ public class CommsClient implements Comms {
 
 
     @Override
-    public void sendMessage(Serializable ... message) {
+    public boolean sendMessage(Serializable message) {
         try {
             out.writeObject(message);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 
     @Override
-    public void sendMessage(int uid, Serializable ... message) {
+    public boolean sendMessage(int uid, Serializable message) {
         //We just call sendMessage and ignore the uid, since only one instance of the server exists, so uid is redundant.
-        sendMessage(message);
+        return sendMessage(message);
     }
 
     /**
@@ -61,6 +65,25 @@ public class CommsClient implements Comms {
      */
     @Override
     public Message receiveMessage() {
+        Message currentMessage = messages.remove();
+        MessageType messageType = currentMessage.getType();
         return messages.remove();
+    }
+
+    /**
+     * First received payload from server, of a certain type.
+     * @param type : Type of payload
+     * @return : Message received
+     */
+    @Override
+    public Message receiveMessage(MessageType type) {
+        for (Message message : messages) {
+            if (message.getType() == type) {
+                Message messageFound = message;
+                messages.remove(message);
+                return messageFound;
+            }
+        }
+        return null;
     }
 }

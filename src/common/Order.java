@@ -85,6 +85,14 @@ public class Order extends Model implements Serializable {
     }
 
     /**
+     * Gets the user's basket
+     * @return HashMap containing Dishes and quantity
+     */
+    public HashMap<Dish, Integer> getBasket() {
+        return this.basket;
+    }
+
+    /**
      * Returns a String representation of everything in the basket
      * @return : String representing contents of the order.
      */

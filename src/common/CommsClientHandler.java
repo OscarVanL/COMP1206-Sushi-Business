@@ -43,11 +43,13 @@ public class CommsClientHandler extends Thread {
         return this.clientUID;
     }
 
-    public void sendMessage(Serializable ...message) {
+    public boolean sendMessage(Serializable message) {
         try {
             out.writeObject(message);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

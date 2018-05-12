@@ -47,31 +47,38 @@ public class CommsServer implements Comms {
     }
 
     /**
-     * Sends message to every single client open
-     * @param message
+     * Sends message to every single client connected to
+     * @param message : Message to send
+     * @return boolean : Error sent without exceptions/errors
      */
     @Override
-    public void sendMessage(Serializable ... message) {
+    public boolean sendMessage(Serializable message) {
+        boolean success = true;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
-            client.sendMessage(message);
+            boolean messageSent = client.sendMessage(message);
+            if (!messageSent) {
+                success = false;
+            }
         }
+        return success;
     }
 
     /**
      * Sends message to a specific client UID (HashCode)
      * @param uid : Client UID
-     * @param message
+     * @param message : Message to send
+     * @return boolean: Error sent without exceptions/errors.
      */
     @Override
-    public void sendMessage(int uid, Serializable ... message) {
+    public boolean sendMessage(int uid, Serializable message) {
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
             if (client.getUID() == uid) {
-                client.sendMessage(message);
+                return client.sendMessage(message);
             }
         }
-
+        return false;
     }
 
     /**
@@ -85,6 +92,24 @@ public class CommsServer implements Comms {
             CommsClientHandler client = (CommsClientHandler) thread;
             message = client.receiveMessage();
             if (!message.equals(null)) {
+                return message;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Receives a Message from any of the open clients matching a specific type.
+     * @param type : Type of message to return
+     * @return Message : Message returned.
+     */
+    @Override
+    public Message receiveMessage(MessageType type) {
+        Message message;
+        for (Thread thread : clientConnections) {
+            CommsClientHandler client = (CommsClientHandler) thread;
+            message = client.receiveMessage();
+            if (!message.equals(null) && message.getType() == type) {
                 return message;
             }
         }
