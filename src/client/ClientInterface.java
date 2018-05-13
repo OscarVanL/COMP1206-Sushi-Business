@@ -5,6 +5,9 @@ import java.util.Map;
 
 import common.*;
 
+/**
+ * @author University of Southampton
+ */
 public interface ClientInterface {
 
 	//Users

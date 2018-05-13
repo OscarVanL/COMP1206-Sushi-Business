@@ -2,25 +2,19 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Ingredient extends Model implements Serializable {
 
     private String measurementUnit;
     private Supplier supplier;
-    private float restockThreshold = 0;
 
     public Ingredient(String name, String unit, Supplier supplier) {
         notifyUpdate("instantiation",null, this);
         super.setName(name);
         this.measurementUnit = unit;
         this.supplier = supplier;
-    }
-
-    public Ingredient(String name, String unit, Supplier supplier, float restockThreshold) {
-        notifyUpdate("instantiation", null, this);
-        super.setName(name);
-        this.measurementUnit = unit;
-        this.supplier = supplier;
-        this.restockThreshold = restockThreshold;
     }
 
     @Override
@@ -41,15 +35,6 @@ public class Ingredient extends Model implements Serializable {
     public void setMeasurementUnit(String measurementUnit) {
         notifyUpdate("unit", this.measurementUnit, measurementUnit);
         this.measurementUnit = measurementUnit;
-    }
-
-    public void setRestockThreshold(float restockThreshold) {
-        notifyUpdate("restock threshold", this.restockThreshold, restockThreshold);
-        this.restockThreshold = restockThreshold;
-    }
-
-    public float getRestockThreshold() {
-        return this.restockThreshold;
     }
 
     /**
@@ -75,6 +60,6 @@ public class Ingredient extends Model implements Serializable {
      */
     @Override
     public String toString() {
-        return this.name + " which is restocked when stock falls below " + restockThreshold + measurementUnit;
+        return this.name;
     }
 }

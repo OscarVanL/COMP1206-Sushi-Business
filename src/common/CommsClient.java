@@ -10,6 +10,11 @@ import java.util.Queue;
 
 import static common.MessageType.*;
 
+/**
+ * Tutorial used for implementation of Thread-based socket communication (although many aspects are changed from this):
+ * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
+ * @author Oscar van Leusen
+ */
 public class CommsClient implements Comms {
 
     private ClientInterface client;

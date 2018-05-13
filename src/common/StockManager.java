@@ -1,34 +1,44 @@
 package common;
 
+import exception.InvalidStockItemException;
+
 import java.util.HashMap;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class StockManager {
 
     //HashMap linking a dish (key) to stock (Integer).
-    HashMap<Dish, StockItem> dishStock = new HashMap<>();
+    HashMap<Dish, StockItem> dishStock;
     //HashMap linking an ingredient (key) to stock (value). Float is used for stock as units can have decimals (eg: 1.5 Litres)
-    HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
+    HashMap<Ingredient, StockItem> ingredientStock;
+
+    public StockManager(HashMap<Dish, StockItem> dishStock, HashMap<Ingredient, StockItem> ingredientStock) {
+        this.dishStock = dishStock;
+        this.ingredientStock = ingredientStock;
+    }
 
     /**
      * Used for adding a new dish, or adding more prepared dishes to the prepared dishes stock
      */
-    public void addDish(Dish toAdd, int amountToAdd) throws Exception {
+    public void addDish(Dish toAdd, int amountToAdd) throws InvalidStockItemException {
         //There are already some of this dish prepared, so add to the number in stock
         if (dishStock.containsKey(toAdd)) {
             dishStock.get(toAdd).addStock(amountToAdd);
         } else {
             //This common.Dish isn't in our common.StockManager yet, so add it to the HashMap.
-            StockItem newDish = new StockItem(toAdd, amountToAdd);
+            StockItem newDish = new StockItem(toAdd, amountToAdd, 0, 0);
             dishStock.put(toAdd, newDish);
         }
     }
 
-    public void addIngredient(Ingredient toAdd, float unitsToAdd) throws Exception {
+    public void addIngredient(Ingredient toAdd, long unitsToAdd) throws InvalidStockItemException {
         if (ingredientStock.containsKey(toAdd)) {
             ingredientStock.get(toAdd).addStock(unitsToAdd);
         } else {
             //This common.Ingredient isn't in our common.StockManager yet, so add it to the HashMap
-            StockItem newIngredient = new StockItem(toAdd, unitsToAdd);
+            StockItem newIngredient = new StockItem(toAdd, unitsToAdd, 0, 0);
             ingredientStock.put(toAdd, newIngredient);
         }
     }

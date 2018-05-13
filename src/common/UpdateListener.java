@@ -5,7 +5,7 @@ package common;
  * This is primarily used by the user interface to be notified when the backend model has been updated and to update the UI.
  * The listener will be called of details of the model (where applicable) and properties (where applicable) that have been updated.
  * Can be used without a model to indicate a general update and to perform a general refresh.
- *
+ * @author University of Southampton
  */
 public interface UpdateListener {
 

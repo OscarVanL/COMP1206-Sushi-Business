@@ -2,17 +2,20 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class User extends Model implements Serializable {
     private String username;
     private String password;
-    private String address;
+    private String location;
     private Postcode postcode;
 
-    public User(String username, String password, String address, Postcode postcode) {
+    public User(String username, String password, String location, Postcode postcode) {
         notifyUpdate("instantiation", null, this);
         this.username = username;
         this.password = password;
-        this.address = address;
+        this.location = location;
         this.postcode = postcode;
         super.setName(username);
     }
@@ -30,12 +33,12 @@ public class User extends Model implements Serializable {
     }
 
     public String getAddress() {
-        return this.address;
+        return this.location;
     }
 
     public void setAddress(String newAddress) {
-        notifyUpdate("address", this.address, newAddress);
-        this.address = newAddress;
+        notifyUpdate("address", this.location, newAddress);
+        this.location = newAddress;
     }
 
     public Postcode getPostcode() {

@@ -3,6 +3,7 @@ package common;
 /**
  * An event to be used with UpdateListeners to communicate what has been updated
  * Should not be created directly, but created as part of the model update methods.
+ * @author University of Southampton
  */
 public class UpdateEvent {
 

@@ -4,6 +4,11 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Queue;
 
+/**
+ * Tutorial used for implementation of Thread-based socket communication (although many aspects are changed from this):
+ * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
+ * @author Oscar van Leusen
+ */
 public class CommsClientHandler extends Thread {
 
     private final Socket socket;

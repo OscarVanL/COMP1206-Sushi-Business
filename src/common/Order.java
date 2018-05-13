@@ -4,15 +4,20 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Order extends Model implements Serializable {
 
     //The price of the current order as an integer (Rather than float to avoid
     private long orderPrice;
     private HashMap<Dish, Integer> basket = new HashMap<>();
+    private User user;
 
-    public Order() {
+    public Order(User user) {
         this.orderPrice = 0;
-        this.name = "";
+        this.user = user;
+        this.name = user.getName() + "'s order.";
     }
 
     public void addDish(Dish dish, int quantity) {
@@ -99,7 +104,7 @@ public class Order extends Model implements Serializable {
     @Override
     public String toString() {
         StringBuilder orderDetails = new StringBuilder();
-        orderDetails.append("An order containing: ");
+        orderDetails.append(user.getName() + "'s order containing: ");
         for (Map.Entry<Dish, Integer> basketEntry : basket.entrySet()) {
             orderDetails.append(basketEntry.getValue() + " orders of " + basketEntry.getKey().getName());
         }

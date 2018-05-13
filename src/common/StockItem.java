@@ -1,25 +1,28 @@
 package common;
 
-import common.Dish;
-import common.Ingredient;
-import common.Model;
+import exception.InvalidStockItemException;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class StockItem {
 
     private boolean isDish;
     private boolean isIngredient;
 
-    private float amountStocked = 0;
-    private float restockThreshold = 0;
-    private float restockAmount = 0;
+    private Model stockedItem;
+    private long amountStocked;
+    private long restockThreshold;
+    private long restockAmount;
 
     /**
      * Creates a common.StockItem for a given Model (common.Dish or common.Ingredient), with the current stock and restocking Threshold.
      * @param stockItem : Model object passed in, from which we use instanceof to determine if it is a common.Dish or common.Ingredient.
-     * @param stock : Existing stock, passed as a float incase it is an ingredient (but if it is a dish this is casted to int)
+     * @param stock : Existing stock, passed as a long incase it is an ingredient (but if it is a dish this is casted to int)
      * @throws Exception : Exception thrown if Model object is not a common.Dish or common.Ingredient (eg: supplier)
      */
-    public StockItem(Model stockItem, float stock) throws Exception {
+    public StockItem(Model stockItem, long stock, long restockThreshold, long restockAmount) throws InvalidStockItemException {
+        this.stockedItem = stockItem;
         if (stockItem instanceof Dish) {
             this.isDish = true;
             this.isIngredient = false;
@@ -33,11 +36,15 @@ public class StockItem {
             this.restockThreshold = restockThreshold;
             this.restockAmount = restockAmount;
         } else {
-            throw new Exception("Non-valid stock item (not common.Dish or common.Ingredient) was used");
+            throw new InvalidStockItemException("Non-valid stock item (not common.Dish or common.Ingredient) was used");
         }
     }
 
-    public void addStock(float stockToAdd) {
+    public Model getStockedItem() {
+        return this.stockedItem;
+    }
+
+    public void addStock(long stockToAdd) {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
             addStock((int) stockToAdd);
@@ -49,7 +56,7 @@ public class StockItem {
         amountStocked += stockToAdd;
     }
 
-    public void setStock(float stock) {
+    public void setStock(long stock) {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
             setStock((int) stock);
@@ -65,15 +72,15 @@ public class StockItem {
         amountStocked = stock;
     }
 
-    public float getStock() {
+    public long getStock() {
         return amountStocked;
     }
 
-    public float getRestockThreshold() {
+    public long getRestockThreshold() {
         return restockThreshold;
     }
 
-    public void setRestockThreshold(float restockThreshold) {
+    public void setRestockThreshold(long restockThreshold) {
         //If it's a dish, we only allow integer restock thresholds
         if (isDish) {
             setRestockThreshold((int) restockThreshold);
@@ -81,11 +88,11 @@ public class StockItem {
         this.restockThreshold = restockThreshold;
     }
 
-    public float getRestockAmount() {
+    public long getRestockAmount() {
         return restockAmount;
     }
 
-    public void setRestockAmount(float restockAmount) {
+    public void setRestockAmount(long restockAmount) {
         //If it's a dish, the restock amount must be an integer amount.
         if (isDish) {
             setRestockAmount((int) restockAmount);

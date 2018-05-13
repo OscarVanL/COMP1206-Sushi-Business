@@ -1,10 +1,8 @@
 package common;
 
-import common.Model;
-import common.UpdateListener;
-
-import java.util.Collection;
-
+/**
+ * @author Oscar van Leusen
+ */
 public class Supplier extends Model {
 
     private float distance;

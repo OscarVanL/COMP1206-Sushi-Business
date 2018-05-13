@@ -4,13 +4,16 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Dish extends Model implements Serializable {
 
     private String dishDescription;
     private long price;
     private HashMap<Ingredient, Float> ingredientAmounts = new HashMap<>();
 
-    private Dish(String dishName, String dishDescription, long price) {
+    public Dish(String dishName, String dishDescription, long price) {
         super.setName(dishName);
         this.dishDescription = dishDescription;
         this.price = price;
@@ -21,7 +24,7 @@ public class Dish extends Model implements Serializable {
      * @param ingredient : Ingredient object to add
      * @param amount : Units of this ingredient required
      */
-    private void addIngredient(Ingredient ingredient, Float amount) {
+    public void addIngredient(Ingredient ingredient, Float amount) {
         if (ingredientAmounts.containsKey(ingredient)) {
             System.out.println("Ingredient already present in dish. Amount required updated");
             setQuantity(ingredient, amount);

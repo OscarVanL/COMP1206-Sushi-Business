@@ -8,6 +8,7 @@ import java.util.List;
  * Base model class for other models to extend. Provides key functionality for all data classes.
  * 
  * You are not permitted to modify this model, but you can extend it.
+ * @author University of Southampton
  */
 public abstract class Model {
 	

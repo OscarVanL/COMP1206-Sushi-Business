@@ -2,6 +2,9 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * @author Oscar van Leusen
+ */
 public interface Comms {
 
     //A message to be sent to all clients

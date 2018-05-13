@@ -1,5 +1,8 @@
 package common;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Configuration {
     private String fileName;
 

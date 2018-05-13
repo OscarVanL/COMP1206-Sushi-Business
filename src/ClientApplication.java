@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class ClientApplication implements ClientInterface {
 
     private ClientWindow clientWindow;

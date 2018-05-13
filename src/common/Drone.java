@@ -1,5 +1,8 @@
 package common;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Drone extends Model implements Runnable {
 
     private String currentJobSummary;

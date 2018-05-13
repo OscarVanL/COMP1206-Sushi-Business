@@ -23,7 +23,7 @@ import server.ServerInterface.UnableToDeleteException;
 /**
  * Provides the Sushi Server user interface
  * You should not need to modify this class if your implementation of the interface is correct.
- *
+ * @author University of Southampton
  */
 public class ServerWindow extends JFrame implements UpdateListener {
 

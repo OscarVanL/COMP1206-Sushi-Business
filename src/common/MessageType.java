@@ -1,5 +1,8 @@
 package common;
 
+/**
+ * @author Oscar van Leusen
+ */
 public enum MessageType {
     REGISTER, LOGIN, USER,
     GET_POSTCODES, POSTCODES,

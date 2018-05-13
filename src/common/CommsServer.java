@@ -8,6 +8,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Tutorial used for implementation of Thread-based socket communication (although many aspects are changed from this):
+ * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
+ * @author Oscar van Leusen
+ */
 public class CommsServer implements Comms {
 
     private ServerSocket serverSocket;

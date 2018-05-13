@@ -2,12 +2,15 @@ package common;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Staff extends Model implements Runnable {
 
     private String currentJobSummary;
     private StockManager stockManager;
 
-    private Staff(String staffName, StockManager stockManager) {
+    public Staff(String staffName, StockManager stockManager) {
         super.setName(staffName);
         this.stockManager = stockManager;
     }

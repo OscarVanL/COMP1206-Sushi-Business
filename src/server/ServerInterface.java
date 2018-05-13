@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import common.*;
+import exception.*;
 
+/**
+ * @author University of Southampton
+ */
 public interface ServerInterface {
 
 	//Configuration
@@ -14,7 +18,7 @@ public interface ServerInterface {
 	 * @param filename configuration file to load
 	 * @throws FileNotFoundException if unable to load given file
 	 */
-	public void loadConfiguration(String filename) throws FileNotFoundException;
+	public void loadConfiguration(String filename) throws FileNotFoundException, InvalidSupplierException, InvalidStockItemException, InvalidIngredientException, InvalidPostcodeException, InvalidUserException, InvalidDishException;
 	
 	//Stock control
 	

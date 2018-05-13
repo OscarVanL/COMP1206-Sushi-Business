@@ -22,7 +22,7 @@ import common.*;
 /**
  * Displays the Sushi Client user interface
  * You should not need to modify this class if your implementation of the interface is correct.
- *
+ * @author University of Southampton
  */
 public class ClientWindow extends JFrame implements UpdateListener {
 

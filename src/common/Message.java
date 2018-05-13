@@ -2,6 +2,9 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * @author Oscar van Leusen
+ */
 public class Message implements Serializable {
 
     private MessageType type;
