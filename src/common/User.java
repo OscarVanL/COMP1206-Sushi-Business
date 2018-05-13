@@ -6,6 +6,7 @@ import java.io.Serializable;
  * @author Oscar van Leusen
  */
 public class User extends Model implements Serializable {
+    private boolean deleteSafe = true;
     private String username;
     private String password;
     private String location;
@@ -26,10 +27,15 @@ public class User extends Model implements Serializable {
 
     public boolean passwordMatches(String password) {
         if (this.password.equals(password)) {
+            this.deleteSafe = false;
             return true;
         } else {
             return false;
         }
+    }
+
+    public void logout() {
+        deleteSafe = true;
     }
 
     public String getAddress() {
@@ -48,6 +54,10 @@ public class User extends Model implements Serializable {
     public void setPostcode(Postcode newPostcode) {
         notifyUpdate("postcode", this.postcode, newPostcode);
         this.postcode = newPostcode;
+    }
+
+    public boolean isDeleteSafe() {
+        return deleteSafe;
     }
 
     @Override

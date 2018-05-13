@@ -5,12 +5,12 @@ package common;
  */
 public class Supplier extends Model {
 
-    private float distance;
+    private long distance;
 
-    public Supplier(String name, float distance) {
+    public Supplier(String name, Number distance) {
         notifyUpdate("instantiation", null, this);
         super.setName(name);
-        this.distance = distance;
+        this.distance = (long) distance;
     }
 
     @Override
@@ -29,7 +29,7 @@ public class Supplier extends Model {
         super.setName(name);
     }
 
-    public void setDistance(float distance) {
+    public void setDistance(long distance) {
         notifyUpdate("distance", this.distance, distance);
         this.distance = distance;
     }
@@ -38,7 +38,7 @@ public class Supplier extends Model {
      * Returns the distance of the Supplier from the Sushi restaurant
      * @return : Distance as a float
      */
-    public float getDistance() {
+    public long getDistance() {
         return this.distance;
     }
 }

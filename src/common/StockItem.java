@@ -1,6 +1,6 @@
 package common;
 
-import exception.InvalidStockItemException;
+import exceptions.InvalidStockItemException;
 
 /**
  * @author Oscar van Leusen
@@ -21,7 +21,7 @@ public class StockItem {
      * @param stock : Existing stock, passed as a long incase it is an ingredient (but if it is a dish this is casted to int)
      * @throws Exception : Exception thrown if Model object is not a common.Dish or common.Ingredient (eg: supplier)
      */
-    public StockItem(Model stockItem, long stock, long restockThreshold, long restockAmount) throws InvalidStockItemException {
+    public StockItem(Model stockItem, long stock, Number restockThreshold, Number restockAmount) throws InvalidStockItemException {
         this.stockedItem = stockItem;
         if (stockItem instanceof Dish) {
             this.isDish = true;
@@ -33,8 +33,8 @@ public class StockItem {
             this.isIngredient = true;
             this.isDish = false;
             this.amountStocked = stock;
-            this.restockThreshold = restockThreshold;
-            this.restockAmount = restockAmount;
+            this.restockThreshold = (long) restockThreshold;
+            this.restockAmount = (long) restockAmount;
         } else {
             throw new InvalidStockItemException("Non-valid stock item (not common.Dish or common.Ingredient) was used");
         }
@@ -56,12 +56,12 @@ public class StockItem {
         amountStocked += stockToAdd;
     }
 
-    public void setStock(long stock) {
+    public void setStock(Number stock) {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
             setStock((int) stock);
         }
-        amountStocked = stock;
+        amountStocked = (long) stock;
     }
 
     public void addRestockAmount() {
@@ -80,24 +80,24 @@ public class StockItem {
         return restockThreshold;
     }
 
-    public void setRestockThreshold(long restockThreshold) {
+    public void setRestockThreshold(Number restockThreshold) {
         //If it's a dish, we only allow integer restock thresholds
         if (isDish) {
             setRestockThreshold((int) restockThreshold);
         }
-        this.restockThreshold = restockThreshold;
+        this.restockThreshold = (long) restockThreshold;
     }
 
     public long getRestockAmount() {
         return restockAmount;
     }
 
-    public void setRestockAmount(long restockAmount) {
+    public void setRestockAmount(Number restockAmount) {
         //If it's a dish, the restock amount must be an integer amount.
         if (isDish) {
             setRestockAmount((int) restockAmount);
         }
-        this.restockAmount = restockAmount;
+        this.restockAmount = (long) restockAmount;
     }
 
     public void setRestockAmount(int restockAmount) {

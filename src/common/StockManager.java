@@ -1,8 +1,9 @@
 package common;
 
-import exception.InvalidStockItemException;
+import exceptions.*;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Oscar van Leusen
@@ -22,25 +23,69 @@ public class StockManager {
     /**
      * Used for adding a new dish, or adding more prepared dishes to the prepared dishes stock
      */
-    public void addDish(Dish toAdd, int amountToAdd) throws InvalidStockItemException {
+    public void addDish(Dish toAdd, int amountToAdd) {
         //There are already some of this dish prepared, so add to the number in stock
         if (dishStock.containsKey(toAdd)) {
             dishStock.get(toAdd).addStock(amountToAdd);
         } else {
             //This common.Dish isn't in our common.StockManager yet, so add it to the HashMap.
-            StockItem newDish = new StockItem(toAdd, amountToAdd, 0, 0);
+            StockItem newDish = null;
+            try {
+                newDish = new StockItem(toAdd, amountToAdd, 0, 0);
+            } catch (InvalidStockItemException e) {
+                e.printStackTrace();
+            }
             dishStock.put(toAdd, newDish);
         }
     }
 
-    public void addIngredient(Ingredient toAdd, long unitsToAdd) throws InvalidStockItemException {
+    public void addIngredient(Ingredient toAdd, long unitsToAdd) {
         if (ingredientStock.containsKey(toAdd)) {
             ingredientStock.get(toAdd).addStock(unitsToAdd);
         } else {
             //This common.Ingredient isn't in our common.StockManager yet, so add it to the HashMap
-            StockItem newIngredient = new StockItem(toAdd, unitsToAdd, 0, 0);
+            StockItem newIngredient = null;
+            try {
+                newIngredient = new StockItem(toAdd, unitsToAdd, 0, 0);
+            } catch (InvalidStockItemException e) {
+                e.printStackTrace();
+            }
             ingredientStock.put(toAdd, newIngredient);
         }
+    }
+
+    public long getStockLevel(Model model) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            return dishStock.get(model).getStock();
+        } else if (model instanceof Ingredient) {
+            return ingredientStock.get(model).getStock();
+        } else {
+            throw new InvalidStockItemException("Attempted to get Stock levels of non-stocked object (not Dish or Ingredient)");
+        }
+    }
+
+    /**
+     * Gets all Ingredient stock levels as a Map
+     * @return Map of Ingredient as Key and stock as Value
+     */
+    public Map<Ingredient, Number> getIngredientStockLevels() {
+        Map<Ingredient, Number> stocks = new HashMap<>();
+        for (Map.Entry<Ingredient, StockItem> stock : ingredientStock.entrySet()) {
+            stocks.put(stock.getKey(), stock.getValue().getStock());
+        }
+        return stocks;
+    }
+
+    /**
+     * Gets all Dish stock levels as a Map
+     * @return Map of Dish as Key and stock as Value
+     */
+    public Map<Dish, Number> getDishStockLevels() {
+        Map<Dish, Number> stocks = new HashMap<>();
+        for (Map.Entry<Dish, StockItem> stock : dishStock.entrySet()) {
+            stocks.put(stock.getKey(), stock.getValue().getStock());
+        }
+        return stocks;
     }
 
     /**

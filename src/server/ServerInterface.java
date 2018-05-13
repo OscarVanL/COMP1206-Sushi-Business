@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import common.*;
-import exception.*;
+import exceptions.*;
 
 /**
  * @author University of Southampton

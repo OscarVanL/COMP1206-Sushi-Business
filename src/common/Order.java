@@ -4,20 +4,28 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import static common.Order.OrderState.*;
+
+
 /**
  * @author Oscar van Leusen
  */
 public class Order extends Model implements Serializable {
+    public enum OrderState {
+        BASKET, PREPARING, DELIVERING, COMPLETE
+    }
 
     //The price of the current order as an integer (Rather than float to avoid
     private long orderPrice;
     private HashMap<Dish, Integer> basket = new HashMap<>();
     private User user;
+    private OrderState state;
 
     public Order(User user) {
         this.orderPrice = 0;
         this.user = user;
         this.name = user.getName() + "'s order.";
+        this.state = BASKET;
     }
 
     public void addDish(Dish dish, int quantity) {
@@ -40,8 +48,17 @@ public class Order extends Model implements Serializable {
         if (basket.containsKey(dish)) {
             notifyUpdate("removed dish", dish, null);
             basket.remove(dish);
+            calculatePrice();
         }
-        calculatePrice();
+
+    }
+
+    public boolean containsDish(Dish dish) {
+        if (basket.containsKey(dish)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -110,6 +127,22 @@ public class Order extends Model implements Serializable {
         }
         orderDetails.append(" totalling: " + this.orderPrice);
         return orderDetails.toString();
+    }
+
+    /**
+     * Returns the user whose order this is
+     * @return User : User whose order this is
+     */
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setOrderState(OrderState state) {
+        this.state = state;
+    }
+
+    public OrderState getOrderState() {
+        return this.state;
     }
 
     @Override

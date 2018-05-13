@@ -2,6 +2,7 @@ package common;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,10 +14,10 @@ public class Dish extends Model implements Serializable {
     private long price;
     private HashMap<Ingredient, Float> ingredientAmounts = new HashMap<>();
 
-    public Dish(String dishName, String dishDescription, long price) {
+    public Dish(String dishName, String dishDescription, Number price) {
         super.setName(dishName);
         this.dishDescription = dishDescription;
-        this.price = price;
+        this.price = (long) price;
     }
 
     /**
@@ -24,14 +25,18 @@ public class Dish extends Model implements Serializable {
      * @param ingredient : Ingredient object to add
      * @param amount : Units of this ingredient required
      */
-    public void addIngredient(Ingredient ingredient, Float amount) {
+    public void addIngredient(Ingredient ingredient, Number amount) {
         if (ingredientAmounts.containsKey(ingredient)) {
             System.out.println("Ingredient already present in dish. Amount required updated");
-            setQuantity(ingredient, amount);
+            setQuantity(ingredient, (float) amount);
         } else {
             notifyUpdate("Ingredient added", null, ingredient);
-            ingredientAmounts.put(ingredient, amount);
+            ingredientAmounts.put(ingredient, (float) amount);
         }
+    }
+
+    public void removeIngredient(Ingredient ingredient) {
+        ingredientAmounts.remove(ingredient);
     }
 
     /**
@@ -76,12 +81,36 @@ public class Dish extends Model implements Serializable {
         return this.dishDescription;
     }
 
+    public boolean containsIngredient(Ingredient ingredient) {
+        if (ingredientAmounts.containsKey(ingredient)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Gets all the ingredients in the recipe as a set
      * @return Set of Ingredient objects
      */
     public Set<Ingredient> getDishIngredients() {
         return ingredientAmounts.keySet();
+    }
+
+    public void setRecipe(Map<Ingredient, Number> newRecipe) {
+        HashMap<Ingredient, Float> newRecipeCasted = new HashMap<Ingredient, Float>();
+        for (Map.Entry<Ingredient, Number> newRecipeIngredient : newRecipe.entrySet()) {
+            newRecipeCasted.put(newRecipeIngredient.getKey(), (float) newRecipeIngredient.getValue());
+        }
+        ingredientAmounts = newRecipeCasted;
+    }
+
+    public Map<Ingredient, Number> getRecipe() {
+        Map<Ingredient, Number> recipe = new HashMap<>();
+        for (Map.Entry<Ingredient, Float> dishIngredients : ingredientAmounts.entrySet()) {
+            recipe.put(dishIngredients.getKey(), dishIngredients.getValue());
+        }
+        return recipe;
     }
 
     @Override

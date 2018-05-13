@@ -1,5 +1,5 @@
 import common.*;
-import exception.*;
+import exceptions.*;
 import server.ServerInterface;
 import server.ServerWindow;
 
@@ -22,20 +22,24 @@ public class ServerApplication implements ServerInterface {
     private ServerWindow serverWindow;
     private CommsServer communication;
 
+    private StockManager stockManager;
     //HashMap linking a dish (key) to StockItem (value).
-    HashMap<Dish, StockItem> dishStock = new HashMap<>();
+    private HashMap<Dish, StockItem> dishStock = new HashMap<>();
     //HashMap linking an ingredient (key) to StockItem (value).
-    HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
+    private HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
 
-    private List<Supplier> suppliers;
-    private List<Ingredient> ingredients;
-    private List<Dish> dishes;
-    private List<Postcode> postcodes;
-    private List<User> users;
-    private List<Order> orders;
-    private List<StockItem> stock;
-    private List<Staff> staff;
-    private List<Drone> drones;
+    private ArrayList<Supplier> suppliers = new ArrayList<>();
+    private ArrayList<Ingredient> ingredients = new ArrayList<>();
+    private ArrayList<Dish> dishes = new ArrayList<>();
+    private ArrayList<Postcode> postcodes = new ArrayList<>();
+    private ArrayList<User> users = new ArrayList<>();
+    private ArrayList<Order> orders = new ArrayList<>();
+    private ArrayList<StockItem> stock = new ArrayList<>();
+    private ArrayList<Staff> staff = new ArrayList<>();
+    private ArrayList<Drone> drones = new ArrayList<>();
+
+    private boolean ingredientsRestocked = true;
+    private boolean dishesRestocked = true;
 
     public static void main(String args[]) {
         ServerInterface serverInterface = initialise();
@@ -141,7 +145,7 @@ public class ServerApplication implements ServerInterface {
      * Instantiates all Ingredients and their Stock data from the text representation of Ingredients from the Config file
      * @param ingredientLines : List containing non-parsed lines of Ingredient information.
      */
-    private void loadIngredients(List<String> ingredientLines) throws InvalidSupplierException, InvalidStockItemException {
+    private void loadIngredients(List<String> ingredientLines) throws InvalidSupplierException {
         //Adds all ingredients in the Configuration structure to our Suppliers array
         for (String line : ingredientLines) {
             //Stucture: [0]INGREDIENT:[1]Name:[2]Unit:[3]Supplier:[4]Restock Threshold:[5]Restock Amount
@@ -157,7 +161,12 @@ public class ServerApplication implements ServerInterface {
                 throw new InvalidSupplierException("Non-valid supplier entered for ingredient when reading Configuration file");
             }
             Ingredient ingredient = new Ingredient(lineParse[1], lineParse[2], ingredientSupplier);
-            StockItem stockStore = new StockItem(ingredient, 0, Long.parseLong(lineParse[4]), Long.parseLong(lineParse[5]));
+            StockItem stockStore = null;
+            try {
+                stockStore = new StockItem(ingredient, 0, Long.parseLong(lineParse[4]), Long.parseLong(lineParse[5]));
+            } catch (InvalidStockItemException e) {
+                e.printStackTrace();
+            }
             ingredientStock.put(ingredient, stockStore);
             ingredients.add(ingredient);
             stock.add(stockStore);
@@ -321,11 +330,11 @@ public class ServerApplication implements ServerInterface {
      * @param staffLines : List containing non-parsed lines of Staff details.
      */
     private void loadStaff(List<String> staffLines) {
-        StockManager staffStockManager = new StockManager(dishStock, ingredientStock);
+        stockManager = new StockManager(dishStock, ingredientStock);
         for (String line : staffLines) {
             //Structure: [0]STAFF:[1]Name
             String[] lineParse = line.split(":");
-            Staff staffMember = new Staff(lineParse[1], staffStockManager);
+            Staff staffMember = new Staff(lineParse[1], stockManager);
             staff.add(staffMember);
         }
     }
@@ -346,231 +355,307 @@ public class ServerApplication implements ServerInterface {
 
     @Override
     public void setRestockingIngredientsEnabled(boolean enabled) {
-
+        this.ingredientsRestocked = enabled;
     }
 
     @Override
     public void setRestockingDishesEnabled(boolean enabled) {
+        this.dishesRestocked = enabled;
 
     }
 
     @Override
     public void setStock(Dish dish, Number stock) {
-
+        dishStock.get(dish).setStock(stock);
     }
 
     @Override
     public void setStock(Ingredient ingredient, Number stock) {
-
+        ingredientStock.get(ingredient).setStock(stock);
     }
 
     @Override
     public List<Dish> getDishes() {
-        return null;
+        return dishes;
     }
 
     @Override
     public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
+        Dish newDish = new Dish(name, description, price);
+        try {
+            StockItem newDishStock = new StockItem(newDish, 0, restockThreshold, restockAmount);
+            dishStock.put(newDish, newDishStock);
+            dishes.add(newDish);
+            stock.add(newDishStock);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     @Override
     public void removeDish(Dish dish) throws UnableToDeleteException {
-
+        //Checks to see if the Dish is contained in any Orders
+        for (Order order : orders) {
+            if (order.containsDish(dish)) {
+                throw new UnableToDeleteException("Attempted to remove Dish that is contained in an order");
+            }
+        }
+        //No exception was thrown, so dish cannot have been contained in any orders.
+        dishes.remove(dish);
+        dishStock.remove(dish);
     }
 
     @Override
     public void addIngredientToDish(Dish dish, Ingredient ingredient, Number quantity) {
-
+        dish.addIngredient(ingredient, quantity);
     }
 
     @Override
     public void removeIngredientFromDish(Dish dish, Ingredient ingredient) {
-
+        dish.removeIngredient(ingredient);
     }
 
     @Override
     public void setRecipe(Dish dish, Map<Ingredient, Number> recipe) {
-
+        dish.setRecipe(recipe);
     }
 
     @Override
     public void setRestockLevels(Dish dish, Number restockThreshold, Number restockAmount) {
-
+        dishStock.get(dish).setRestockThreshold(restockThreshold);
+        dishStock.get(dish).setRestockAmount(restockAmount);
     }
 
     @Override
     public Number getRestockThreshold(Dish dish) {
-        return null;
+        return dishStock.get(dish).getRestockThreshold();
     }
 
     @Override
     public Number getRestockAmount(Dish dish) {
-        return null;
+        return dishStock.get(dish).getRestockAmount();
     }
 
     @Override
     public Map<Ingredient, Number> getRecipe(Dish dish) {
-        return null;
+        return dish.getRecipe();
     }
 
     @Override
     public Map<Dish, Number> getDishStockLevels() {
-        return null;
+        return stockManager.getDishStockLevels();
     }
 
     @Override
     public List<Ingredient> getIngredients() {
-        return null;
+        return ingredients;
     }
 
     @Override
     public Ingredient addIngredient(String name, String unit, Supplier supplier, Number restockThreshold, Number restockAmount) {
-        return null;
+        Ingredient newIngredient  = new Ingredient(name, unit, supplier);
+        StockItem newIngredientStock = null;
+        try {
+            newIngredientStock = new StockItem(newIngredient, 0, restockThreshold, restockAmount);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        ingredientStock.put(newIngredient, newIngredientStock);
+        stock.add(newIngredientStock);
+        ingredients.add(newIngredient);
+        return newIngredient;
     }
 
     @Override
     public void removeIngredient(Ingredient ingredient) throws UnableToDeleteException {
-
+        boolean contained = false;
+        for (Dish dish : dishes) {
+            if (dish.containsIngredient(ingredient)) {
+                contained = true;
+            }
+        }
+        if (contained) {
+            throw new UnableToDeleteException("Attempted to remove Ingredient when it is still used in a Dish");
+        } else {
+            ingredients.remove(ingredient);
+            ingredientStock.remove(ingredient);
+        }
     }
 
     @Override
     public void setRestockLevels(Ingredient ingredient, Number restockThreshold, Number restockAmount) {
-
+        ingredientStock.get(ingredient).setRestockThreshold(restockThreshold);
+        ingredientStock.get(ingredient).setRestockAmount(restockAmount);
     }
 
     @Override
     public Number getRestockThreshold(Ingredient ingredient) {
-        return null;
+        return ingredientStock.get(ingredient).getRestockThreshold();
     }
 
     @Override
     public Number getRestockAmount(Ingredient ingredient) {
-        return null;
+        return ingredientStock.get(ingredient).getRestockAmount();
     }
 
     @Override
     public Map<Ingredient, Number> getIngredientStockLevels() {
-        return null;
+        return stockManager.getIngredientStockLevels();
     }
 
     @Override
     public List<Supplier> getSuppliers() {
-        return null;
+        return suppliers;
     }
 
     @Override
     public Supplier addSupplier(String name, Number distance) {
-        return null;
+        Supplier newSupplier = new Supplier(name, distance);
+        suppliers.add(newSupplier);
+        return newSupplier;
     }
 
     @Override
     public void removeSupplier(Supplier supplier) throws UnableToDeleteException {
-
+        //See if any ingredient uses this supplier, if it does, throw an UnableToDeleteException
+        for (Ingredient ingredient : ingredients) {
+            if (ingredient.getSupplier().equals(supplier)) {
+                throw new UnableToDeleteException("Attempted to remove Supplier that is still used for supplying ingredient: " + ingredient.getName());
+            }
+        }
+        //If it got through those checks without any exception, we can remove it!
+        suppliers.remove(supplier);
     }
 
     @Override
     public Number getSupplierDistance(Supplier supplier) {
-        return null;
+        return supplier.getDistance();
     }
 
     @Override
     public List<Drone> getDrones() {
-        return null;
+        return drones;
     }
 
     @Override
     public Drone addDrone(Number speed) {
-        return null;
+        Drone newDrone = new Drone(speed);
+        drones.add(newDrone);
+        return newDrone;
     }
 
     @Override
     public void removeDrone(Drone drone) throws UnableToDeleteException {
-
+        drones.remove(drone);
     }
 
     @Override
     public Number getDroneSpeed(Drone drone) {
-        return null;
+        return drone.getSpeed();
     }
 
     @Override
     public String getDroneStatus(Drone drone) {
-        return null;
+        return drone.toString();
     }
 
     @Override
     public List<Staff> getStaff() {
-        return null;
+        return staff;
     }
 
     @Override
     public Staff addStaff(String name) {
-        return null;
+        Staff newStaff = new Staff(name, stockManager);
+        staff.add(newStaff);
+        return newStaff;
     }
 
     @Override
     public void removeStaff(Staff staff) throws UnableToDeleteException {
-
+        this.staff.remove(staff);
     }
 
     @Override
     public String getStaffStatus(Staff staff) {
-        return null;
+        return staff.toString();
     }
 
     @Override
     public List<Order> getOrders() {
-        return null;
+        return orders;
     }
 
     @Override
     public void removeOrder(Order order) throws UnableToDeleteException {
-
+        orders.remove(order);
     }
 
     @Override
     public Number getOrderDistance(Order order) {
-        return null;
+        return order.getUser().getPostcode().getDistance();
     }
 
     @Override
     public boolean isOrderComplete(Order order) {
-        return false;
+        if (order.getOrderState() == Order.OrderState.COMPLETE) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public String getOrderStatus(Order order) {
-        return null;
+        Order.OrderState state = order.getOrderState();
+        if (state == Order.OrderState.BASKET) {
+            return "BASKET";
+        } else if (state == Order.OrderState.PREPARING) {
+            return "PREPARING";
+        } else if (state == Order.OrderState.DELIVERING) {
+            return "DELIVERING";
+        } else {
+            return "COMPLETE";
+        }
     }
 
     @Override
     public Number getOrderCost(Order order) {
-        return null;
+        return order.getOrderPrice();
     }
 
     @Override
     public List<Postcode> getPostcodes() {
-        return null;
+        return postcodes;
     }
 
     @Override
     public void addPostcode(String code, Number distance) {
-
+        postcodes.add(new Postcode(code, distance));
     }
 
     @Override
     public void removePostcode(Postcode postcode) throws UnableToDeleteException {
-
+        if (postcode.isDeleteSafe()) {
+            postcodes.remove(postcode);
+        } else {
+            throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
+        }
     }
 
     @Override
     public List<User> getUsers() {
-        return null;
+        return users;
     }
 
     @Override
     public void removeUser(User user) throws UnableToDeleteException {
+        if (user.isDeleteSafe()) {
+            users.remove(user);
+        } else {
+            throw new UnableToDeleteException("Attempted to delete User while not safe to delete user.");
+        }
 
     }
 
