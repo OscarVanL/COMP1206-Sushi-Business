@@ -1,9 +1,10 @@
 package common;
 
 import exceptions.*;
-import org.omg.CORBA.DynAnyPackage.Invalid;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -144,6 +145,13 @@ public class StockManager {
         } else {
             throw new InvalidStockItemException("Attempted to get restock amount of non-stocked Model (Not Dish or Ingredient");
         }
+    }
+
+    public List<StockItem> getStock() {
+        List<StockItem> allStock = new ArrayList<>();
+        allStock.addAll(dishStock.values());
+        allStock.addAll(ingredientStock.values());
+        return allStock;
     }
 
     /**

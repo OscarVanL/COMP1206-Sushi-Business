@@ -26,6 +26,8 @@ public class ClientApplication implements ClientInterface {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
     }
 
     private static ClientInterface initialise() {

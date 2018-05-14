@@ -38,6 +38,7 @@ public class CommsClientHandler extends Thread {
                     //If this is the first thing we've received, it's the client telling us its UID, so store this.
                     if (firstPayload) {
                         clientUID = (Integer) receivedPayload;
+                        out.writeBoolean(true);
                     } else {
                         Message receivedMessage = (Message) receivedPayload;
                         receivedMessage.setConnectionUID(clientUID);

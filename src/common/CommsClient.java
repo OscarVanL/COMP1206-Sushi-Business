@@ -29,12 +29,17 @@ public class CommsClient implements Comms {
         this.port = port;
         InetAddress localIP = InetAddress.getLocalHost();
         Socket socket = new Socket(localIP, port);
-
+        if (socket.isConnected()) {
+            System.out.println("Client connected to server!");
+        }
         in = new ObjectInputStream(socket.getInputStream());
         out = new ObjectOutputStream(socket.getOutputStream());
 
         //Passes the hashCode of the ClientInterface to act as a UID so that the server knows what client it's talking to.
         out.writeInt(client.hashCode());
+        if (in.readBoolean()) {
+            System.out.println("Connected to Server");
+        }
 
         while (true) {
             Message received = null;

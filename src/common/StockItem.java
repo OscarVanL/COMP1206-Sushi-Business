@@ -60,7 +60,7 @@ public class StockItem {
     public void setStock(Number stock) {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
-            amountStocked = (int) stock;
+            amountStocked = stock.intValue();
         }
         amountStocked = (long) stock;
     }

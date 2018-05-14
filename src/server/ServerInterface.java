@@ -18,8 +18,7 @@ public interface ServerInterface {
 	 * @param filename configuration file to load
 	 * @throws FileNotFoundException if unable to load given file
 	 */
-	public void loadConfiguration(String filename) throws FileNotFoundException, InvalidSupplierException, InvalidStockItemException, InvalidIngredientException, InvalidPostcodeException, InvalidUserException, InvalidDishException;
-	
+	public void loadConfiguration(String filename);
 	//Stock control
 	
 	/**
