@@ -20,17 +20,16 @@ public class ClientApplication implements ClientInterface {
         ClientInterface clientInterface = initialise();
         ClientApplication app = (ClientApplication) clientInterface;
         ClientWindow window = app.launchGUI(clientInterface);
-    }
-
-    private static ClientInterface initialise() {
-        ClientApplication app = new ClientApplication();
 
         try {
             app.comms = new CommsClient(app, 5000);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private static ClientInterface initialise() {
+        ClientApplication app = new ClientApplication();
         return app;
     }
 

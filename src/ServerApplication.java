@@ -41,11 +41,6 @@ public class ServerApplication extends Thread implements ServerInterface {
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
         ServerWindow window = app.launchGUI(serverInterface);
-    }
-
-    private static ServerInterface initialise() {
-        ServerApplication app = new ServerApplication();
-
         try {
             app.communication = new CommsServer(app, 5000);
             //Starts threaded aspect of ServerApplication that checks for messages in CommsServer.
@@ -53,7 +48,27 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private static ServerInterface initialise() {
+        ServerApplication app = new ServerApplication();
+        try {
+            app.loadConfiguration("ConfigurationExample.txt");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvalidSupplierException e) {
+            e.printStackTrace();
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        } catch (InvalidIngredientException e) {
+            e.printStackTrace();
+        } catch (InvalidPostcodeException e) {
+            e.printStackTrace();
+        } catch (InvalidUserException e) {
+            e.printStackTrace();
+        } catch (InvalidDishException e) {
+            e.printStackTrace();
+        }
         return app;
     }
 
@@ -82,31 +97,31 @@ public class ServerApplication extends Thread implements ServerInterface {
         List<String> droneLines = new ArrayList<>();
         try (Stream<String> fileStream = Files.lines(Paths.get(filename))) {
             allLines = fileStream.collect(Collectors.toList());
-            supplierLines = fileStream
+            supplierLines = allLines.stream()
                                 .filter(line -> line.startsWith("SUPPLIER:"))
                                 .collect(Collectors.toList());
-            ingredientLines = fileStream
+            ingredientLines = allLines.stream()
                                 .filter(line -> line.startsWith("INGREDIENT:"))
                                 .collect(Collectors.toList());
-            dishLines = fileStream
+            dishLines = allLines.stream()
                                 .filter(line -> line.startsWith("DISH:"))
                                 .collect(Collectors.toList());
-            postcodeLines = fileStream
+            postcodeLines = allLines.stream()
                                 .filter(line -> line.startsWith("POSTCODE:"))
                                 .collect(Collectors.toList());
-            userLines = fileStream
+            userLines = allLines.stream()
                                 .filter(line -> line.startsWith("USER:"))
                                 .collect(Collectors.toList());
-            orderLines = fileStream
+            orderLines = allLines.stream()
                                 .filter(line -> line.startsWith("ORDER:"))
                                 .collect(Collectors.toList());
-            stockLines = fileStream
+            stockLines = allLines.stream()
                                 .filter(line -> line.startsWith("STOCK:"))
                                 .collect(Collectors.toList());
-            staffLines = fileStream
+            staffLines = allLines.stream()
                                 .filter(line -> line.startsWith("STAFF:"))
                                 .collect(Collectors.toList());
-            droneLines = fileStream
+            droneLines = allLines.stream()
                                 .filter(line -> line.startsWith("DRONE:"))
                                 .collect(Collectors.toList());
         } catch (IOException e) {
@@ -195,7 +210,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             //Iterates through each ingredient in the dish to add it.
             for (int i=0; i<ingredientParse.length; i++) {
                 //Parses Ingredients into structure: [0]Quantity,[1]Name
-                String[] currentIngredient = ingredientParse[i].split(" * ");
+                String[] currentIngredient = ingredientParse[i].split("\\s\\*\\s");
                 //Looks for an existing ingredient matching the name of the ingredient to add
                 Ingredient dishIngredient = null;
                 for (Ingredient ingredient : ingredients) {
@@ -204,7 +219,7 @@ public class ServerApplication extends Thread implements ServerInterface {
                     }
                 }
                 if (dishIngredient == null) {
-                    throw new InvalidIngredientException("Non-valid ingredient entered for dish: " + lineParse[1] + " when reading Configuration file.");
+                    throw new InvalidIngredientException("Non-valid ingredient: " + currentIngredient[1] + " entered for dish: " + lineParse[1] + " when reading Configuration file.");
                 }
                 dish.addIngredient(dishIngredient, Float.parseFloat(currentIngredient[0]));
             }
@@ -276,7 +291,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             String[] orderContents = lineParse[2].split(",");
             for (int i=0; i<orderContents.length; i++) {
                 //Structure: [0]Quantity, [1]Dish
-                String[] orderInfo = orderContents[i].split(" * ");
+                String[] orderInfo = orderContents[i].split("\\s\\*\\s");
                 Dish orderDish = null;
                 for (Dish dish : dishes) {
                     if (dish.getName().equals(orderInfo[1])) {

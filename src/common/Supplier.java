@@ -10,7 +10,7 @@ public class Supplier extends Model {
     public Supplier(String name, Number distance) {
         notifyUpdate("instantiation", null, this);
         super.setName(name);
-        this.distance = (long) distance;
+        this.distance = Long.valueOf(distance.longValue());
     }
 
     @Override

@@ -18,6 +18,7 @@ import javax.swing.event.*;
 import javax.swing.table.AbstractTableModel;
 
 import common.*;
+import exceptions.*;
 import server.ServerInterface.UnableToDeleteException;
 
 /**
@@ -1181,8 +1182,20 @@ public class ServerWindow extends JFrame implements UpdateListener {
 					File configFile = chooser.getSelectedFile();
 					try {
 						server.loadConfiguration(configFile.getAbsolutePath());
-					} catch (FileNotFoundException exception) {
-						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + exception.getMessage());
+					} catch (FileNotFoundException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidPostcodeException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidStockItemException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidSupplierException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidDishException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidUserException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
+					} catch (InvalidIngredientException ex) {
+						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + ex.getMessage());
 					}
 				}
 			});
