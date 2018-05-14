@@ -4,7 +4,8 @@ package common;
  * @author Oscar van Leusen
  */
 public enum MessageType {
-    REGISTER, LOGIN, USER,
+    REGISTER, REGISTER_SUCCESS,
+    LOGIN, LOGIN_SUCCESS,
     GET_POSTCODES, POSTCODES,
     GET_DISHES, DISHES,
     GET_DISH_DESC, DISH_DESC,

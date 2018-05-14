@@ -17,6 +17,7 @@ import static common.MessageType.*;
  */
 public class CommsClient implements Comms {
 
+    private boolean newMessage = false;
     private ClientInterface client;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -43,6 +44,7 @@ public class CommsClient implements Comms {
                 e.printStackTrace();
             }
             messages.add(received);
+            this.newMessage = true;
         }
     }
 
@@ -90,5 +92,10 @@ public class CommsClient implements Comms {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean getMessageStatus() {
+        return this.newMessage;
     }
 }

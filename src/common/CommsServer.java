@@ -14,7 +14,7 @@ import java.util.List;
  * @author Oscar van Leusen
  */
 public class CommsServer implements Comms {
-
+    private boolean newMessage = false;
     private ServerSocket serverSocket;
     private ServerInterface server;
     private int port;
@@ -39,7 +39,7 @@ public class CommsServer implements Comms {
 
                 System.out.println("Assigning thread to this client");
 
-                Thread thread = new CommsClientHandler(socket, in, out);
+                Thread thread = new CommsClientHandler(socket, in, out, this, server);
                 clientConnections.add(thread);
 
                 thread.start();
@@ -91,7 +91,7 @@ public class CommsServer implements Comms {
      * @return Message : Message read
      */
     @Override
-    public Message receiveMessage() {
+    synchronized public Message receiveMessage() {
         Message message;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
@@ -109,7 +109,7 @@ public class CommsServer implements Comms {
      * @return Message : Message returned.
      */
     @Override
-    public Message receiveMessage(MessageType type) {
+    synchronized public Message receiveMessage(MessageType type) {
         Message message;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
@@ -119,5 +119,14 @@ public class CommsServer implements Comms {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean getMessageStatus() {
+        return newMessage;
+    }
+
+    public void setMessageStatus(boolean newMessage) {
+        this.newMessage = newMessage;
     }
 }

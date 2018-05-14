@@ -47,29 +47,22 @@ public class StockItem {
     public void addStock(long stockToAdd) {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
+            amountStocked += (int) stockToAdd;
             addStock((int) stockToAdd);
         }
         amountStocked += stockToAdd;
-    }
-
-    public void addStock(int stockToAdd) {
-        amountStocked += stockToAdd;
-    }
-
-    public void setStock(Number stock) {
-        //If it's a dish, we only allow integer levels of stock
-        if (isDish) {
-            setStock((int) stock);
-        }
-        amountStocked = (long) stock;
     }
 
     public void addRestockAmount() {
         amountStocked += restockAmount;
     }
 
-    public void setStock(int stock) {
-        amountStocked = stock;
+    public void setStock(Number stock) {
+        //If it's a dish, we only allow integer levels of stock
+        if (isDish) {
+            amountStocked = (int) stock;
+        }
+        amountStocked = (long) stock;
     }
 
     public long getStock() {
@@ -83,7 +76,7 @@ public class StockItem {
     public void setRestockThreshold(Number restockThreshold) {
         //If it's a dish, we only allow integer restock thresholds
         if (isDish) {
-            setRestockThreshold((int) restockThreshold);
+            this.restockThreshold = (int) restockThreshold;
         }
         this.restockThreshold = (long) restockThreshold;
     }
@@ -95,17 +88,9 @@ public class StockItem {
     public void setRestockAmount(Number restockAmount) {
         //If it's a dish, the restock amount must be an integer amount.
         if (isDish) {
-            setRestockAmount((int) restockAmount);
+            this.restockAmount = (int) restockAmount;
         }
         this.restockAmount = (long) restockAmount;
-    }
-
-    public void setRestockAmount(int restockAmount) {
-        this.restockAmount = restockAmount;
-    }
-
-    public void setRestockThreshold(int restockThreshold) {
-        this.restockThreshold = restockThreshold;
     }
 
     public boolean isDish() {

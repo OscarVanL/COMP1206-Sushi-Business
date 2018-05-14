@@ -17,16 +17,12 @@ import java.util.stream.Stream;
 /**
  * @author Oscar van Leusen
  */
-public class ServerApplication implements ServerInterface {
+public class ServerApplication extends Thread implements ServerInterface {
 
     private ServerWindow serverWindow;
     private CommsServer communication;
 
-    private StockManager stockManager;
-    //HashMap linking a dish (key) to StockItem (value).
-    private HashMap<Dish, StockItem> dishStock = new HashMap<>();
-    //HashMap linking an ingredient (key) to StockItem (value).
-    private HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
+    private StockManager stockManager = new StockManager();
 
     private ArrayList<Supplier> suppliers = new ArrayList<>();
     private ArrayList<Ingredient> ingredients = new ArrayList<>();
@@ -38,8 +34,8 @@ public class ServerApplication implements ServerInterface {
     private ArrayList<Staff> staff = new ArrayList<>();
     private ArrayList<Drone> drones = new ArrayList<>();
 
-    private boolean ingredientsRestocked = true;
-    private boolean dishesRestocked = true;
+    public static boolean ingredientsRestocked = true;
+    public static boolean dishesRestocked = true;
 
     public static void main(String args[]) {
         ServerInterface serverInterface = initialise();
@@ -52,6 +48,8 @@ public class ServerApplication implements ServerInterface {
 
         try {
             app.communication = new CommsServer(app, 5000);
+            //Starts threaded aspect of ServerApplication that checks for messages in CommsServer.
+            app.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -146,6 +144,9 @@ public class ServerApplication implements ServerInterface {
      * @param ingredientLines : List containing non-parsed lines of Ingredient information.
      */
     private void loadIngredients(List<String> ingredientLines) throws InvalidSupplierException {
+        //HashMap linking an ingredient (key) to StockItem (value).
+        HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
+
         //Adds all ingredients in the Configuration structure to our Suppliers array
         for (String line : ingredientLines) {
             //Stucture: [0]INGREDIENT:[1]Name:[2]Unit:[3]Supplier:[4]Restock Threshold:[5]Restock Amount
@@ -171,6 +172,7 @@ public class ServerApplication implements ServerInterface {
             ingredients.add(ingredient);
             stock.add(stockStore);
         }
+        stockManager.addIngredients(ingredientStock);
     }
 
     /**
@@ -178,6 +180,9 @@ public class ServerApplication implements ServerInterface {
      * @param dishLines : List containing non-parsed lines of dish information.
      */
     private void loadDishes(List<String> dishLines) throws InvalidStockItemException, InvalidIngredientException {
+        //HashMap linking a dish (key) to StockItem (value).
+        HashMap<Dish, StockItem> dishStock = new HashMap<>();
+
         for (String line : dishLines) {
             //Structure: [0]DISH:[1]Name:[2]Description:[3]Price:[4]Restock Threshold:[5]Restock Amount:[6]Quantity * Item,Quantity * Item...
             String[] lineParse = line.split(":");
@@ -207,6 +212,8 @@ public class ServerApplication implements ServerInterface {
             dishes.add(dish);
             stock.add(stockStore);
         }
+
+        stockManager.addDishes(dishStock);
     }
 
     /**
@@ -330,7 +337,6 @@ public class ServerApplication implements ServerInterface {
      * @param staffLines : List containing non-parsed lines of Staff details.
      */
     private void loadStaff(List<String> staffLines) {
-        stockManager = new StockManager(dishStock, ingredientStock);
         for (String line : staffLines) {
             //Structure: [0]STAFF:[1]Name
             String[] lineParse = line.split(":");
@@ -366,12 +372,20 @@ public class ServerApplication implements ServerInterface {
 
     @Override
     public void setStock(Dish dish, Number stock) {
-        dishStock.get(dish).setStock(stock);
+        try {
+            stockManager.setStockLevel(dish, stock);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void setStock(Ingredient ingredient, Number stock) {
-        ingredientStock.get(ingredient).setStock(stock);
+        try {
+            stockManager.setStockLevel(ingredient, stock);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -384,13 +398,13 @@ public class ServerApplication implements ServerInterface {
         Dish newDish = new Dish(name, description, price);
         try {
             StockItem newDishStock = new StockItem(newDish, 0, restockThreshold, restockAmount);
-            dishStock.put(newDish, newDishStock);
+            stockManager.addDish(newDish, newDishStock);
             dishes.add(newDish);
             stock.add(newDishStock);
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
-        return null;
+        return newDish;
     }
 
     @Override
@@ -403,7 +417,7 @@ public class ServerApplication implements ServerInterface {
         }
         //No exception was thrown, so dish cannot have been contained in any orders.
         dishes.remove(dish);
-        dishStock.remove(dish);
+        stockManager.removeDish(dish);
     }
 
     @Override
@@ -423,18 +437,32 @@ public class ServerApplication implements ServerInterface {
 
     @Override
     public void setRestockLevels(Dish dish, Number restockThreshold, Number restockAmount) {
-        dishStock.get(dish).setRestockThreshold(restockThreshold);
-        dishStock.get(dish).setRestockAmount(restockAmount);
+        try {
+            stockManager.setRestockAmount(dish, restockAmount);
+            stockManager.setRestockThreshold(dish, restockThreshold);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public Number getRestockThreshold(Dish dish) {
-        return dishStock.get(dish).getRestockThreshold();
+        try {
+            return stockManager.getRestockThreshold(dish);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public Number getRestockAmount(Dish dish) {
-        return dishStock.get(dish).getRestockAmount();
+        try {
+            return stockManager.getRestockAmount(dish);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -461,7 +489,7 @@ public class ServerApplication implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
-        ingredientStock.put(newIngredient, newIngredientStock);
+        stockManager.addIngredient(newIngredient, newIngredientStock);
         stock.add(newIngredientStock);
         ingredients.add(newIngredient);
         return newIngredient;
@@ -469,34 +497,49 @@ public class ServerApplication implements ServerInterface {
 
     @Override
     public void removeIngredient(Ingredient ingredient) throws UnableToDeleteException {
-        boolean contained = false;
+        //Checks that the ingredient is not still used in any dish.
+        boolean containedInDish = false;
         for (Dish dish : dishes) {
             if (dish.containsIngredient(ingredient)) {
-                contained = true;
+                containedInDish = true;
             }
         }
-        if (contained) {
+        if (containedInDish) {
             throw new UnableToDeleteException("Attempted to remove Ingredient when it is still used in a Dish");
         } else {
             ingredients.remove(ingredient);
-            ingredientStock.remove(ingredient);
+            stockManager.removeIngredient(ingredient);
         }
     }
 
     @Override
     public void setRestockLevels(Ingredient ingredient, Number restockThreshold, Number restockAmount) {
-        ingredientStock.get(ingredient).setRestockThreshold(restockThreshold);
-        ingredientStock.get(ingredient).setRestockAmount(restockAmount);
+        try {
+            stockManager.setRestockThreshold(ingredient, restockThreshold);
+            stockManager.setRestockAmount(ingredient, restockAmount);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public Number getRestockThreshold(Ingredient ingredient) {
-        return ingredientStock.get(ingredient).getRestockThreshold();
+        try {
+            return stockManager.getRestockThreshold(ingredient);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public Number getRestockAmount(Ingredient ingredient) {
-        return ingredientStock.get(ingredient).getRestockAmount();
+        try {
+            return stockManager.getRestockAmount(ingredient);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -657,6 +700,216 @@ public class ServerApplication implements ServerInterface {
             throw new UnableToDeleteException("Attempted to delete User while not safe to delete user.");
         }
 
+    }
+
+    @Override
+    public void run() {
+        try {
+            synchronized(this) {
+                while (!communication.getMessageStatus()) {
+                    this.wait();
+                }
+                Message message = communication.receiveMessage();
+                processMessage(message);
+
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processMessage(Message message) {
+        MessageType type = message.getType();
+
+        if (type == MessageType.REGISTER) {
+            processRegister(message);
+        } else if (type == MessageType.LOGIN) {
+            processLogin(message);
+        } else if (type == MessageType.GET_POSTCODES) {
+            processGetPostcodes(message);
+        } else if (type == MessageType.GET_DISHES) {
+            processGetDishes(message);
+        /**} else if (type == MessageType.GET_DISH_DESC) {
+            processGetDishDesc(message);**/
+        } else if (type == MessageType.GET_BASKET) {
+            processGetBasket(message);
+        } else if (type == MessageType.GET_BASKET_COST) {
+            processGetBasketCost(message);
+        } else if (type == MessageType.GET_ORDERS) {
+            processGetOrders(message);
+        } else if (type == MessageType.GET_STATUS) {
+            processGetOrderStatus(message);
+        } else if (type == MessageType.GET_COST) {
+            processGetOrderCost(message);
+        } else if (type == MessageType.SEND_DISH) {
+            processAddDishToBasket(message);
+        } else if (type == MessageType.SEND_CHECKOUT) {
+            processUserCheckout(message);
+        } else if (type == MessageType.SEND_CLEAR) {
+            processBasketClear(message);
+        } else if (type == MessageType.SEND_CANCEL) {
+            processOrderCancel(message);
+        }
+    }
+
+    private void processRegister(Message message) {
+        int uid = message.getConnectionUID();
+        User newUser = (User) message.getPayload();
+        newUser.setClientUID(uid);
+        users.add(newUser);
+        Message reply = new Message(MessageType.REGISTER_SUCCESS, true);
+        communication.sendMessage(uid, reply);
+    }
+
+    private void processLogin(Message message) {
+        int uid = message.getConnectionUID();
+        Message reply;
+        ArrayList<String> loginDetails = (ArrayList<String>) message.getPayload();
+        boolean loginCorrect = false;
+        for (User user : users) {
+            //there's a user where both username and password match those entered, it was a correct login!
+            if (user.getUsername().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
+                loginCorrect = true;
+            }
+        }
+        if (loginCorrect) {
+            reply = new Message(MessageType.LOGIN_SUCCESS, true);
+        } else {
+            reply = new Message(MessageType.LOGIN_SUCCESS, false);
+        }
+        communication.sendMessage(uid, reply);
+    }
+
+    private void processGetPostcodes(Message message) {
+        int uid = message.getConnectionUID();
+        Message reply = new Message(MessageType.POSTCODES, this.getPostcodes());
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processGetDishes(Message message) {
+        int uid = message.getConnectionUID();
+        Message reply = new Message(MessageType.DISHES, this.getDishes());
+        communication.sendMessage(uid, reply);
+    }
+
+    //TODO: Same as other TODO, how does this work for objects passed to/from JREs with sockets.
+    /**public void processGetDishDesc(Message message) {
+        int uid = message.getConnectionUID();
+        Dish dishDescRequest = (Dish) message.getPayload();
+        Message reply = new Message(MessageType.DISH_DESC, dishDescRequest.getDishDescription());
+        communication.sendMessage(uid, reply);
+    }**/
+
+    /**public void processGetDishPrice(Message message) {
+        int uid = message.getConnectionUID();
+        Dish dishPriceRequest = (Dish) message.getPayload();
+        Message reply = new Message(MessageType.DISH_PRICE, dishPriceRequest.getPrice());
+        communication.sendMessage(uid, reply);
+    }**/
+
+    public void processGetBasket(Message message) {
+        int uid = message.getConnectionUID();
+        User user = (User) message.getPayload();
+
+        Message reply = new Message(MessageType.BASKET, null);
+        for (Order order : orders) {
+            //If any Order object that is still in basket and for the requested user, this is the correct Order.
+            if (order.getOrderState() == Order.OrderState.BASKET && order.getUser().equals(user)) {
+                reply = new Message(MessageType.BASKET, order);
+            }
+        }
+        communication.sendMessage(uid, reply);
+
+    }
+
+    public void processGetBasketCost(Message message) {
+        int uid = message.getConnectionUID();
+        User user = (User) message.getPayload();
+
+        Message reply = new Message(MessageType.BASKET_COST, null);
+        for (Order order : orders) {
+            if (order.getUser().equals(user)) {
+                reply = new Message(MessageType.BASKET_COST, order.getOrderPrice());
+            }
+        }
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processGetOrders(Message message) {
+        int uid = message.getConnectionUID();
+        Message reply = new Message(MessageType.ORDERS, orders);
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processGetOrderStatus(Message message) {
+        int uid = message.getConnectionUID();
+        Order orderRequested = (Order) message.getPayload();
+        String status;
+        Order.OrderState state = orderRequested.getOrderState();
+        if (state == Order.OrderState.BASKET) {
+            status = "BASKET";
+        } else if (state == Order.OrderState.PREPARING) {
+            status = "PREPARING";
+        } else if (state == Order.OrderState.DELIVERING) {
+            status = "DELIVERING";
+        } else if (state == Order.OrderState.COMPLETE) {
+            status = "COMPLETE";
+        } else if (state == Order.OrderState.CANCELLED) {
+            status = "CANCELLED";
+        }else {
+            status = "";
+        }
+        Message reply = new Message(MessageType.STATUS, status);
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processGetOrderCost(Message message) {
+        int uid = message.getConnectionUID();
+        Order orderRequested = (Order) message.getPayload();
+        Message reply = new Message(MessageType.COST, orderRequested.getOrderPrice());
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processAddDishToBasket(Message message) {
+        int uid = message.getConnectionUID();
+        //Structure: [0]User user, [1]Dish dish, [2] Number quantity
+        ArrayList<Object> dishData = (ArrayList<Object>) message.getPayload();
+        for (Order order : orders) {
+            if (order.getUser().equals(dishData.get(0))) {
+                order.addDish((Dish) dishData.get(1), (int) dishData.get(2));
+            }
+        }
+
+    }
+
+    public void processUserCheckout(Message message) {
+        int uid = message.getConnectionUID();
+        User user = (User) message.getPayload();
+        Message reply = new Message(MessageType.ORDER, null);
+        for (Order order : orders) {
+            if (order.getUser().equals(user)) {
+                order.setOrderState(Order.OrderState.PREPARING);
+                reply = new Message(MessageType.ORDER, order);
+            }
+        }
+        communication.sendMessage(uid, reply);
+    }
+
+    public void processBasketClear(Message message) {
+        int uid = message.getConnectionUID();
+        User user = (User) message.getPayload();
+        for (Order order : orders) {
+            if (order.getUser().equals(user)) {
+                order.clear();
+            }
+        }
+    }
+
+    public void processOrderCancel(Message message) {
+        int uid = message.getConnectionUID();
+        //TODO : Fairly sure this doesn't work, and the same logical flaw also applies in multiple methods above too. I don't know how objects link and whether they continue to be .equals() after being serialised and passed along the Socket to the other application. Must do research on this.
+        Order toCancel = (Order) message.getPayload();
+        toCancel.cancelOrder();
     }
 
     @Override

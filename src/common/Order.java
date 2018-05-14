@@ -12,7 +12,7 @@ import static common.Order.OrderState.*;
  */
 public class Order extends Model implements Serializable {
     public enum OrderState {
-        BASKET, PREPARING, DELIVERING, COMPLETE
+        BASKET, PREPARING, DELIVERING, COMPLETE, CANCELLED
     }
 
     //The price of the current order as an integer (Rather than float to avoid
@@ -50,7 +50,15 @@ public class Order extends Model implements Serializable {
             basket.remove(dish);
             calculatePrice();
         }
+    }
 
+    public void clear() {
+        //Use of .clone() is usually discouraged because when used incorrectly it can cause problems,
+        //but in this case we just want to copy the basket object by value and not reference before clearing it.
+        //So the usual reasons for avoiding it do not apply.
+        HashMap<Dish, Integer> oldBasket = (HashMap<Dish, Integer>) basket.clone();
+        basket.clear();
+        notifyUpdate("cleared basket", oldBasket, basket);
     }
 
     public boolean containsDish(Dish dish) {
@@ -112,6 +120,10 @@ public class Order extends Model implements Serializable {
      */
     public HashMap<Dish, Integer> getBasket() {
         return this.basket;
+    }
+
+    public void cancelOrder() {
+        this.state = OrderState.CANCELLED;
     }
 
     /**

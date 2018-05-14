@@ -9,6 +9,8 @@ public class Message implements Serializable {
 
     private MessageType type;
     private Object payload;
+    //If this message was sent from a client or is directed to a client, it must contain its UID so that we know 'who' to send it to.
+    private int connectionUID = 0;
 
     public Message(MessageType type, Object payload) {
         this.type = type;
@@ -38,5 +40,17 @@ public class Message implements Serializable {
      */
     public Object getPayload() {
         return this.payload;
+    }
+
+    /**
+     * Gets the UID the message was for, or is directed to
+     * @return UID of client that sent the message or the client it is intended for.
+     */
+    public int getConnectionUID() {
+        return this.connectionUID;
+    }
+
+    public void setConnectionUID(int uid) {
+        this.connectionUID = uid;
     }
 }

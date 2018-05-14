@@ -4,6 +4,7 @@ import common.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,15 +43,34 @@ public class ClientApplication implements ClientInterface {
     @Override
     public User register(String username, String password, String address, Postcode postcode) {
         User newUser = new User(username, password, address, postcode);
-        comms.sendMessage(new Message(MessageType.REGISTER, newUser));
-        return newUser;
+        boolean success = comms.sendMessage(new Message(MessageType.REGISTER, newUser));
+        if (success) {
+            Message receivedMessage = comms.receiveMessage(MessageType.REGISTER_SUCCESS);
+            //REGISTER_SUCCESS messages return true or false boolean
+            if ((boolean) receivedMessage.getPayload()) {
+                return newUser;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 
     //TODO: login communications
     @Override
     public User login(String username, String password) {
-
-        return null;
+        ArrayList<String> loginDetails = new ArrayList();
+        loginDetails.add(username);
+        loginDetails.add(password);
+        boolean success = comms.sendMessage(new Message(MessageType.LOGIN, loginDetails));
+        if (success) {
+            Message receivedMessage = comms.receiveMessage(MessageType.LOGIN_SUCCESS);
+            //LOGIN_SUCCESS message returns User object corresponding to the login used (or null if incorrect login)
+            return (User) receivedMessage.getPayload();
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -75,22 +95,24 @@ public class ClientApplication implements ClientInterface {
 
     @Override
     public String getDishDescription(Dish dish) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
+        return dish.getDishDescription();
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_DESC);
             return (String) receivedMessage.getPayload();
         }
-        return null;
+        return null;**/
     }
 
     @Override
     public Number getDishPrice(Dish dish) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
+        return dish.getPrice();
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_PRICE);
             return (long) receivedMessage.getPayload();
         }
-        return null;
+        return null;**/
     }
 
     @Override
@@ -116,7 +138,7 @@ public class ClientApplication implements ClientInterface {
     //TODO: Think about a better structure than this. List<Object> is a risky structure for different types
     @Override
     public void addDishToBasket(User user, Dish dish, Number quantity) {
-        List<Object> dishToAdd = new ArrayList<>();
+        ArrayList<Object> dishToAdd = new ArrayList<>();
         dishToAdd.add(user);
         dishToAdd.add(dish);
         dishToAdd.add(quantity);

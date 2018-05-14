@@ -11,6 +11,8 @@ public class User extends Model implements Serializable {
     private String password;
     private String location;
     private Postcode postcode;
+    //The UID of the client this user is logged in to. (-1 if not logged in)
+    private int clientUID = -1;
 
     public User(String username, String password, String location, Postcode postcode) {
         notifyUpdate("instantiation", null, this);
@@ -35,7 +37,24 @@ public class User extends Model implements Serializable {
     }
 
     public void logout() {
+        clientUID = -1;
         deleteSafe = true;
+    }
+
+    public boolean isLoggedIn() {
+        if (clientUID != -1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void setClientUID(int uid) {
+        this.clientUID = uid;
+    }
+
+    public int getClientUID() {
+        return this.clientUID;
     }
 
     public String getAddress() {

@@ -1,6 +1,7 @@
 package common;
 
 import exceptions.*;
+import org.omg.CORBA.DynAnyPackage.Invalid;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,13 @@ public class StockManager {
     //HashMap linking an ingredient (key) to stock (value). Float is used for stock as units can have decimals (eg: 1.5 Litres)
     HashMap<Ingredient, StockItem> ingredientStock;
 
+    /**
+     * Instantiates StockManager without any parameters, stocked dishes and ingredients must be later added.
+     */
+    public StockManager() {
+        dishStock = new HashMap<>();
+        ingredientStock = new HashMap<>();
+    }
     public StockManager(HashMap<Dish, StockItem> dishStock, HashMap<Ingredient, StockItem> ingredientStock) {
         this.dishStock = dishStock;
         this.ingredientStock = ingredientStock;
@@ -39,6 +47,18 @@ public class StockManager {
         }
     }
 
+    public void addDish(Dish toAdd, StockItem stockData) {
+        dishStock.put(toAdd, stockData);
+    }
+
+    public void removeDish(Dish toRemove) {
+        dishStock.remove(toRemove);
+    }
+
+    public void addDishes(HashMap<Dish, StockItem> dishesToAdd) {
+        dishStock.putAll(dishesToAdd);
+    }
+
     public void addIngredient(Ingredient toAdd, long unitsToAdd) {
         if (ingredientStock.containsKey(toAdd)) {
             ingredientStock.get(toAdd).addStock(unitsToAdd);
@@ -54,13 +74,75 @@ public class StockManager {
         }
     }
 
+    public void addIngredient(Ingredient toAdd, StockItem stockData) {
+        ingredientStock.put(toAdd, stockData);
+    }
+
+    public void removeIngredient(Ingredient toRemove) {
+        ingredientStock.remove(toRemove);
+    }
+
+    public void addIngredients(HashMap<Ingredient, StockItem> ingredientsToAdd) {
+        ingredientStock.putAll(ingredientsToAdd);
+    }
+
     public long getStockLevel(Model model) throws InvalidStockItemException {
         if (model instanceof Dish) {
             return dishStock.get(model).getStock();
         } else if (model instanceof Ingredient) {
             return ingredientStock.get(model).getStock();
         } else {
-            throw new InvalidStockItemException("Attempted to get Stock levels of non-stocked object (not Dish or Ingredient)");
+            throw new InvalidStockItemException("Attempted to get Stock levels of non-stocked Mbject (not Dish or Ingredient)");
+        }
+    }
+
+    public void setStockLevel(Model model, Number stockLevel) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            dishStock.get(model).setStock(stockLevel);
+        } else if (model instanceof Ingredient) {
+            ingredientStock.get(model).setStock(stockLevel);
+        } else {
+            throw new InvalidStockItemException("Attempted to set Stock levels of non-stocked Model (not Dish or Ingredient)");
+        }
+    }
+
+    public long getRestockThreshold(Model model) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            return dishStock.get(model).getRestockThreshold();
+        } else if (model instanceof Ingredient) {
+            return ingredientStock.get(model).getRestockThreshold();
+        } else {
+            throw new InvalidStockItemException("Attempted to get the restock threshold of non-stocked Model (not Dish or Ingredient)");
+        }
+    }
+
+    public void setRestockThreshold(Model model, Number restockThreshold) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            dishStock.get(model).setRestockThreshold(restockThreshold);
+        } else if (model instanceof Ingredient) {
+            ingredientStock.get(model).setRestockThreshold(restockThreshold);
+        } else {
+            throw new InvalidStockItemException("Attempted to set restock threshold of non-stocked Model (not Dish or Ingredient)");
+        }
+    }
+
+    public void setRestockAmount(Model model, Number restockAmount) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            dishStock.get(model).setRestockAmount(restockAmount);
+        } else if (model instanceof Ingredient) {
+            ingredientStock.get(model).setRestockAmount(restockAmount);
+        } else {
+            throw new InvalidStockItemException("Attempted to set restock amount of non-stocked Model (Not Dish or Ingredient)");
+        }
+    }
+
+    public long getRestockAmount(Model model) throws InvalidStockItemException {
+        if (model instanceof Dish) {
+            return dishStock.get(model).getRestockAmount();
+        } else if (model instanceof Ingredient) {
+            return ingredientStock.get(model).getRestockAmount();
+        } else {
+            throw new InvalidStockItemException("Attempted to get restock amount of non-stocked Model (Not Dish or Ingredient");
         }
     }
 
