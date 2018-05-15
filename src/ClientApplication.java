@@ -30,7 +30,6 @@ public class ClientApplication extends Thread implements ClientInterface {
 
         System.out.println("back in main");
         ClientWindow window = app.launchGUI(clientInterface);
-
     }
 
     @Override
@@ -67,8 +66,10 @@ public class ClientApplication extends Thread implements ClientInterface {
             Message receivedMessage = comms.receiveMessage(MessageType.REGISTER_SUCCESS);
             //REGISTER_SUCCESS messages return true or false boolean
             if ((boolean) receivedMessage.getPayload()) {
+                notifyUpdate();
                 return newUser;
             } else {
+                notifyUpdate();
                 return null;
             }
         } else {
@@ -86,8 +87,13 @@ public class ClientApplication extends Thread implements ClientInterface {
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.LOGIN_SUCCESS);
             //LOGIN_SUCCESS message returns User object corresponding to the login used (or null if incorrect login)
-            return (User) receivedMessage.getPayload();
+            if (receivedMessage.getPayload() == null) {
+                return null;
+            } else {
+                return (User) receivedMessage.getPayload();
+            }
         } else {
+            notifyUpdate();
             return null;
         }
     }
@@ -97,7 +103,7 @@ public class ClientApplication extends Thread implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_POSTCODES));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.POSTCODES);
-            return (List<Postcode>) receivedMessage.getPayload();
+            return (ArrayList<Postcode>) receivedMessage.getPayload();
         }
         return null;
     }
@@ -107,7 +113,7 @@ public class ClientApplication extends Thread implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_DISHES));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISHES);
-            return (List<Dish>) receivedMessage.getPayload();
+            return (ArrayList<Dish>) receivedMessage.getPayload();
         }
         return null;
     }
@@ -136,7 +142,8 @@ public class ClientApplication extends Thread implements ClientInterface {
 
     @Override
     public Map<Dish, Number> getBasket(User user) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET));
+        System.out.println(user.getName());
+        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.BASKET);
             return (Map<Dish, Number>) receivedMessage.getPayload();
@@ -146,7 +153,7 @@ public class ClientApplication extends Thread implements ClientInterface {
 
     @Override
     public Number getBasketCost(User user) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET_COST));
+        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET_COST, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.BASKET_COST);
             return (long) receivedMessage.getPayload();
@@ -162,6 +169,7 @@ public class ClientApplication extends Thread implements ClientInterface {
         dishToAdd.add(dish);
         dishToAdd.add(quantity);
         comms.sendMessage(new Message(MessageType.SEND_DISH, dishToAdd));
+        notifyUpdate();
     }
 
     @Override
@@ -169,6 +177,7 @@ public class ClientApplication extends Thread implements ClientInterface {
         //I call the add method here, because my add/update functionality in Order.class is the same as it checks for
         //pre-existing matching dishes.
         addDishToBasket(user, dish, quantity);
+        notifyUpdate();
     }
 
     @Override
@@ -176,6 +185,7 @@ public class ClientApplication extends Thread implements ClientInterface {
         boolean success = comms.sendMessage(MessageType.SEND_CHECKOUT);
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
+            notifyUpdate();
             return (Order) receivedMessage.getPayload();
         }
         return null;
@@ -184,6 +194,7 @@ public class ClientApplication extends Thread implements ClientInterface {
     @Override
     public void clearBasket(User user) {
         comms.sendMessage(MessageType.SEND_CANCEL);
+        notifyUpdate();
     }
 
     @Override
@@ -231,6 +242,7 @@ public class ClientApplication extends Thread implements ClientInterface {
     @Override
     public void cancelOrder(Order order) {
         comms.sendMessage(new Message(MessageType.SEND_CANCEL, order));
+        notifyUpdate();
     }
 
     @Override

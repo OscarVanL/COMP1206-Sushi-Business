@@ -20,13 +20,13 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     private StockManager stockManager = new StockManager();
 
+    private ArrayList<UpdateListener> listeners = new ArrayList<>();
     private ArrayList<Supplier> suppliers = new ArrayList<>();
     private ArrayList<Ingredient> ingredients = new ArrayList<>();
     private ArrayList<Dish> dishes = new ArrayList<>();
     private ArrayList<Postcode> postcodes = new ArrayList<>();
     private ArrayList<User> users = new ArrayList<>();
     private ArrayList<Order> orders = new ArrayList<>();
-    //private ArrayList<StockItem> stock = new ArrayList<>();
     private ArrayList<Staff> staff = new ArrayList<>();
     private ArrayList<Drone> drones = new ArrayList<>();
 
@@ -38,7 +38,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         ServerApplication app = (ServerApplication) serverInterface;
         app.serverWindow = app.launchGUI(serverInterface);
 
-        Thread commsThread = null;
+        Thread commsThread;
         try {
             commsThread = new CommsServer(serverInterface, 5000);
             communication = (CommsServer) commsThread;
@@ -71,24 +71,6 @@ public class ServerApplication extends Thread implements ServerInterface {
                 }
             }
         }
-        /**
-        synchronized(this) {
-            while (!communication.getMessageStatus()) {
-                System.out.println("waitings");
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            System.out.println("Receiving message!");
-            Message message = communication.receiveMessage();
-            if (message != null) {
-                processMessage(message);
-            } else {
-                System.out.println("Received message contained null.");
-            }
-        }**/
     }
 
     private static ServerInterface initialise() {
@@ -113,6 +95,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             Server server = new Server(this, stockManager, users, orders);
             config = new Configuration(server, filename);
             config.loadConfiguration();
+            notifyUpdate();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
             e.printStackTrace();
         }
@@ -548,14 +531,17 @@ public class ServerApplication extends Thread implements ServerInterface {
         Message reply;
         ArrayList<String> loginDetails = (ArrayList<String>) message.getPayload();
         boolean loginCorrect = false;
+        User loggedIn = null;
         for (User user : users) {
             //there's a user where both username and password match those entered, it was a correct login!
             if (user.getUsername().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
+                loggedIn = user;
                 loginCorrect = true;
             }
         }
+        reply = new Message(MessageType.LOGIN_SUCCESS);
         if (loginCorrect) {
-            reply = new Message(MessageType.LOGIN_SUCCESS, true);
+            reply = new Message(MessageType.LOGIN_SUCCESS, loggedIn);
         } else {
             reply = new Message(MessageType.LOGIN_SUCCESS, false);
         }
@@ -592,26 +578,41 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     public void processGetBasket(Message message) {
         int uid = message.getConnectionUID();
-        User user = (User) message.getPayload();
+        User clientUser = (User) message.getPayload();
+        User basketUser = null;
 
-        Message reply = new Message(MessageType.BASKET, null);
-        for (Order order : orders) {
-            //If any Order object that is still in basket and for the requested user, this is the correct Order.
-            if (order.getOrderState() == Order.OrderState.BASKET && order.getUser().equals(user)) {
-                reply = new Message(MessageType.BASKET, order);
+        for (User user: users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                basketUser = user;
             }
         }
-        communication.sendMessage(uid, reply);
 
+        if (basketUser != null) {
+            Message reply = new Message(MessageType.BASKET);
+            for (Order order : orders) {
+                //If any Order object that is still in basket and for the requested user, this is the correct Order.
+                if (order.getUser().equals(basketUser)) {
+                    reply = new Message(MessageType.BASKET, order.getBasket());
+                }
+            }
+            communication.sendMessage(uid, reply);
+        }
     }
 
     public void processGetBasketCost(Message message) {
         int uid = message.getConnectionUID();
-        User user = (User) message.getPayload();
+        User clientUser = (User) message.getPayload();
+        User basketUser = null;
 
-        Message reply = new Message(MessageType.BASKET_COST, null);
+        for (User user: users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                basketUser = user;
+            }
+        }
+
+        Message reply = new Message(MessageType.BASKET_COST);
         for (Order order : orders) {
-            if (order.getUser().equals(user)) {
+            if (order.getUser().equals(basketUser)) {
                 reply = new Message(MessageType.BASKET_COST, order.getOrderPrice());
             }
         }
@@ -700,11 +701,13 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public void addUpdateListener(UpdateListener listener) {
-
+        this.listeners.add(listener);
     }
 
     @Override
     public void notifyUpdate() {
-        serverWindow.refreshAll();
+        for (UpdateListener listener : listeners) {
+            listener.updated(new UpdateEvent());
+        }
     }
 }

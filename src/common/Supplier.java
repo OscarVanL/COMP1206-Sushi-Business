@@ -1,11 +1,13 @@
 package common;
 
+import java.io.Serializable;
+
 /**
  * @author Oscar van Leusen
  */
-public class Supplier extends Model {
+public class Supplier extends Model implements Serializable {
 
-    private long distance;
+    private Long distance;
 
     public Supplier(String name, Number distance) {
         notifyUpdate("instantiation", null, this);
@@ -38,7 +40,7 @@ public class Supplier extends Model {
      * Returns the distance of the Supplier from the Sushi restaurant
      * @return : Distance as a float
      */
-    public long getDistance() {
+    public Long getDistance() {
         return this.distance;
     }
 }

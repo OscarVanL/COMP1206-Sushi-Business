@@ -14,10 +14,10 @@ import java.util.Map;
 public class Server implements ServerInterface {
     ServerInterface server;
     StockManager stockManager;
-    List<User> users;
-    List<Order> orders;
+    ArrayList<User> users;
+    ArrayList<Order> orders;
 
-    public Server(ServerInterface server, StockManager stockManager, List<User> users, List<Order> orders) {
+    public Server(ServerInterface server, StockManager stockManager, ArrayList<User> users, ArrayList<Order> orders) {
         this.server = server;
         this.stockManager = stockManager;
         this.users = users;

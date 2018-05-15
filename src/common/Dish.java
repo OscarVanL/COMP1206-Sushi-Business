@@ -10,14 +10,15 @@ import java.util.Set;
  */
 public class Dish extends Model implements Serializable {
 
+    private String dishName;
     private String dishDescription;
     private long price;
-    private HashMap<Ingredient, Float> ingredientAmounts = new HashMap<>();
+    private HashMap<Ingredient, Long> ingredientAmounts = new HashMap<>();
 
     public Dish(String dishName, String dishDescription, Number price) {
-        super.setName(dishName);
+        this.dishName = dishName;
         this.dishDescription = dishDescription;
-        this.price = (long) price;
+        this.price = price.longValue();
     }
 
     /**
@@ -28,10 +29,10 @@ public class Dish extends Model implements Serializable {
     public void addIngredient(Ingredient ingredient, Number amount) {
         if (ingredientAmounts.containsKey(ingredient)) {
             System.out.println("Ingredient already present in dish. Amount required updated");
-            setQuantity(ingredient, (float) amount);
+            setQuantity(ingredient, amount.longValue());
         } else {
             notifyUpdate("Ingredient added", null, ingredient);
-            ingredientAmounts.put(ingredient, (float) amount);
+            ingredientAmounts.put(ingredient, amount.longValue());
         }
     }
 
@@ -44,7 +45,7 @@ public class Dish extends Model implements Serializable {
      * @param ingredient : Ingredient to update
      * @param newQuantity : New quantity of ingredient required
      */
-    public void setQuantity(Ingredient ingredient, Float newQuantity) {
+    public void setQuantity(Ingredient ingredient, Long newQuantity) {
         if (ingredientAmounts.containsKey(ingredient)) {
         notifyUpdate("Ingredient quantity updated", ingredientAmounts.get(ingredient), newQuantity);
             ingredientAmounts.replace(ingredient, newQuantity);
@@ -98,16 +99,16 @@ public class Dish extends Model implements Serializable {
     }
 
     public void setRecipe(Map<Ingredient, Number> newRecipe) {
-        HashMap<Ingredient, Float> newRecipeCasted = new HashMap<Ingredient, Float>();
+        HashMap<Ingredient, Long> newRecipeCasted = new HashMap<>();
         for (Map.Entry<Ingredient, Number> newRecipeIngredient : newRecipe.entrySet()) {
-            newRecipeCasted.put(newRecipeIngredient.getKey(), (float) newRecipeIngredient.getValue());
+            newRecipeCasted.put(newRecipeIngredient.getKey(), newRecipeIngredient.getValue().longValue());
         }
         ingredientAmounts = newRecipeCasted;
     }
 
     public Map<Ingredient, Number> getRecipe() {
         Map<Ingredient, Number> recipe = new HashMap<>();
-        for (Map.Entry<Ingredient, Float> dishIngredients : ingredientAmounts.entrySet()) {
+        for (Map.Entry<Ingredient, Long> dishIngredients : ingredientAmounts.entrySet()) {
             recipe.put(dishIngredients.getKey(), dishIngredients.getValue());
         }
         return recipe;
@@ -115,6 +116,6 @@ public class Dish extends Model implements Serializable {
 
     @Override
     public String getName() {
-        return super.name;
+        return this.dishName;
     }
 }

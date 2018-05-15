@@ -10,7 +10,9 @@ DISH:Sushi Roll:Rice and things:10:1:10:150 * Rice,30 * Vinegar,10 * Salt,1 * Av
 DISH:Side Rice:Side portion of rice:5:1:10:500 * Rice
 
 POSTCODE:SO17 1BJ:2
+POSTCODE:SO18 2NU:1
 USER:Admin:password:University Road:SO17 1BJ
+USER:Oscar:password:Wessex Lane:SO18 2NU
 
 ORDER:Admin:5 * Sushi Roll,2 * Side Rice
 

@@ -187,6 +187,7 @@ public class Configuration {
             for (Postcode postcode : server.getPostcodes()) {
                 if (postcode.getName().equals(lineParse[4])) {
                     userPostcode = postcode;
+                    break;
                 }
             }
             if (userPostcode == null) {

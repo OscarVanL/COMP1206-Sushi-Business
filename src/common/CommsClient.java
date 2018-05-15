@@ -67,22 +67,18 @@ public class CommsClient extends Thread implements Comms {
             //client.notifyAll();
             System.out.println("checking");
             Message received = null;
-            synchronized (messages) {
-                try {
-                    received = (Message) in.readObject();
-                } catch (IOException | ClassNotFoundException e) {
-                    try {
-                        socket.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+            try {
+                received = (Message) in.readObject();
+                synchronized (messages) {
+                    if (received != null) {
+                        messages.add(received);
+                        this.newMessage = true;
                     }
-                    e.printStackTrace();
                 }
-                if (received != null) {
-                    messages.add(received);
-                    this.newMessage = true;
-                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
+
         }
     }
 
@@ -110,15 +106,20 @@ public class CommsClient extends Thread implements Comms {
      */
     @Override
     public Message receiveMessage() {
-        synchronized (messages) {
-            if (messages != null) {
-                Message currentMessage = messages.remove();
-                MessageType messageType = currentMessage.getType();
-                return messages.remove();
-            } else {
-                return null;
+        //Tries to receive the message a few times because of timing differences. Bit of a hacky solution but oh well.
+        do {
+            synchronized (messages) {
+                if (!messages.isEmpty()) {
+                    return messages.remove();
+                }
             }
-        }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while (messages.isEmpty());
+        return null;
     }
 
     /**
@@ -128,15 +129,17 @@ public class CommsClient extends Thread implements Comms {
      */
     @Override
     public Message receiveMessage(MessageType type) {
-        synchronized (messages) {
-            for (Message message : messages) {
-                if (message.getType() == type) {
-                    Message messageFound = message;
-                    messages.remove(message);
-                    return messageFound;
+        do {
+            synchronized (messages) {
+                for (Message message : messages) {
+                    if (message.getType() == type) {
+                        messages.remove(message);
+                        return message;
+                    }
                 }
             }
-        }
+        } while (messages.isEmpty());
+
         return null;
     }
 

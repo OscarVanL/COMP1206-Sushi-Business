@@ -20,7 +20,6 @@ public class User extends Model implements Serializable {
         this.password = password;
         this.location = location;
         this.postcode = postcode;
-        super.setName(username);
     }
 
     public String getUsername() {
@@ -81,6 +80,6 @@ public class User extends Model implements Serializable {
 
     @Override
     public String getName() {
-        return this.name;
+        return this.username;
     }
 }

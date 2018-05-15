@@ -8,20 +8,20 @@ import java.io.Serializable;
 public class Postcode extends Model implements Serializable {
     private boolean deleteSafe = true;
     private String postcode;
-    private long distance;
+    private Long distance;
 
     public Postcode(String postcode, Number distance) {
         notifyUpdate("instantiation", null, this);
         super.name = postcode;
         this.postcode = postcode;
-        this.distance = (long) distance;
+        this.distance = distance.longValue();
     }
 
     /**
      * Gets the distance of this postcode from the Sushi restaurant
      * @return long : Distance from restaurant
      */
-    public long getDistance() {
+    public Long getDistance() {
         return this.distance;
     }
 
@@ -41,7 +41,7 @@ public class Postcode extends Model implements Serializable {
 
     @Override
     public String getName() {
-        return this.name;
+        return this.postcode;
     }
 
 

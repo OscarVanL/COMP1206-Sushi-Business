@@ -159,6 +159,6 @@ public class Order extends Model implements Serializable {
 
     @Override
     public String getName() {
-        return this.name;
+        return this.toString();
     }
 }
