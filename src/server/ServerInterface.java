@@ -18,7 +18,7 @@ public interface ServerInterface {
 	 * @param filename configuration file to load
 	 * @throws FileNotFoundException if unable to load given file
 	 */
-	public void loadConfiguration(String filename);
+	public void loadConfiguration(String filename) throws FileNotFoundException;
 	//Stock control
 	
 	/**

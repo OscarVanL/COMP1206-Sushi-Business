@@ -2,6 +2,7 @@ package common;
 
 import server.ServerInterface;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class Server implements ServerInterface {
     //All interface methods, simply call the ServerApplication's methods.
 
     @Override
-    public void loadConfiguration(String filename) {
+    public void loadConfiguration(String filename) throws FileNotFoundException {
         server.loadConfiguration(filename);
     }
 

@@ -2,31 +2,39 @@ import client.ClientInterface;
 import client.ClientWindow;
 import common.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Oscar van Leusen
  */
-public class ClientApplication implements ClientInterface {
+public class ClientApplication extends Thread implements ClientInterface {
 
+    //public static boolean ready = false;
     private ClientWindow clientWindow;
-    CommsClient comms;
+    private static CommsClient comms;
+    private List<UpdateListener> listeners = new ArrayList<>();
 
     public static void main(String args[]) {
         ClientInterface clientInterface = initialise();
         ClientApplication app = (ClientApplication) clientInterface;
+
+        new Thread(() -> {
+            synchronized (app) {
+                System.out.println("launching comms");
+                CommsClient clientComms = new CommsClient(app, 5000);
+                comms = clientComms;
+            }
+        }).start();
+
+        System.out.println("back in main");
         ClientWindow window = app.launchGUI(clientInterface);
 
-        try {
-            app.comms = new CommsClient(app, 5000);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    }
 
+    @Override
+    public void run() {
 
     }
 
@@ -36,9 +44,19 @@ public class ClientApplication implements ClientInterface {
     }
 
     ClientWindow launchGUI(ClientInterface clientInterface) {
-        ClientWindow window = new ClientWindow(clientInterface);
-        this.clientWindow = window;
-        return window;
+        System.out.println("entered launchGUI");
+        synchronized (this) {
+            while (!comms.initialised()) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            ClientWindow window = new ClientWindow(clientInterface);
+            this.clientWindow = window;
+            return window;
+        }
     }
 
     @Override
@@ -217,11 +235,13 @@ public class ClientApplication implements ClientInterface {
 
     @Override
     public void addUpdateListener(UpdateListener listener) {
-
+        this.listeners.add(listener);
     }
 
     @Override
     public void notifyUpdate() {
-
+        for (UpdateListener listener : listeners) {
+            listener.updated(new UpdateEvent());
+        }
     }
 }

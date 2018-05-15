@@ -141,7 +141,7 @@ public class Configuration {
             Dish newDish = server.addDish(lineParse[1], lineParse[2], Long.parseLong(lineParse[3]), Integer.parseInt(lineParse[4]), Integer.parseInt(lineParse[5]));
 
             //Parse each Ingredient (separated by a comma and a space). [0]ingredient 1, [1]ingredient 2, ...
-            String[] ingredientParse = lineParse[6].split(",\\s");
+            String[] ingredientParse = lineParse[6].split(",");
 
             //Iterates through each ingredient in the dish to add it.
             for (int i=0; i<ingredientParse.length; i++) {
@@ -157,7 +157,7 @@ public class Configuration {
                 if (dishIngredient == null) {
                     throw new InvalidIngredientException("Non-valid ingredient: " + currentIngredient[1] + " entered for dish: " + lineParse[1] + " when reading Configuration file.");
                 }
-                server.addIngredientToDish(newDish, dishIngredient, Float.parseFloat(ingredientParse[0]));
+                server.addIngredientToDish(newDish, dishIngredient, Float.parseFloat(currentIngredient[0]));
             }
         }
     }

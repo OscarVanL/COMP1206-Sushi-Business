@@ -5,14 +5,9 @@ import server.ServerWindow;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Oscar van Leusen
@@ -21,7 +16,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     private ServerWindow serverWindow;
     private Configuration config;
-    private CommsServer communication;
+    private static CommsServer communication;
 
     private StockManager stockManager = new StockManager();
 
@@ -42,18 +37,62 @@ public class ServerApplication extends Thread implements ServerInterface {
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
         app.serverWindow = app.launchGUI(serverInterface);
+
+        Thread commsThread = null;
         try {
-            app.communication = new CommsServer(app, 5000);
-            //Starts threaded aspect of ServerApplication that checks for messages in CommsServer.
-            app.start();
+            commsThread = new CommsServer(serverInterface, 5000);
+            communication = (CommsServer) commsThread;
+            commsThread.start();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        app.start();
+        try {
+            app.loadConfiguration("ConfigurationExample.txt");
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
+    public void run() {
+        System.out.println("entered run");
+        while (true) {
+            System.out.print("");
+            if (communication.getMessageStatus()) {
+                Message message = communication.receiveMessage();
+                communication.setMessageStatus(false);
+                System.out.println("Message received in serverApplication run()");
+                if (message != null) {
+                    processMessage(message);
+                } else {
+                    System.out.println("But message contents was null");
+                }
+            }
+        }
+        /**
+        synchronized(this) {
+            while (!communication.getMessageStatus()) {
+                System.out.println("waitings");
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println("Receiving message!");
+            Message message = communication.receiveMessage();
+            if (message != null) {
+                processMessage(message);
+            } else {
+                System.out.println("Received message contained null.");
+            }
+        }**/
+    }
+
     private static ServerInterface initialise() {
         ServerApplication app = new ServerApplication();
-        app.loadConfiguration("ConfigurationExample.txt");
         return app;
     }
 
@@ -69,13 +108,11 @@ public class ServerApplication extends Thread implements ServerInterface {
      * @throws FileNotFoundException Exception thrown if the file is not found.
      */
     @Override
-    public void loadConfiguration(String filename) {
+    public void loadConfiguration(String filename) throws FileNotFoundException {
         try {
             Server server = new Server(this, stockManager, users, orders);
             config = new Configuration(server, filename);
             config.loadConfiguration();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
             e.printStackTrace();
         }
@@ -99,6 +136,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
+        notifyUpdate();
     }
 
     @Override
@@ -108,6 +146,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
+        notifyUpdate();
     }
 
     @Override
@@ -125,6 +164,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
+        notifyUpdate();
         return newDish;
     }
 
@@ -139,21 +179,25 @@ public class ServerApplication extends Thread implements ServerInterface {
         //No exception was thrown, so dish cannot have been contained in any orders.
         dishes.remove(dish);
         stockManager.removeDish(dish);
+        notifyUpdate();
     }
 
     @Override
     public void addIngredientToDish(Dish dish, Ingredient ingredient, Number quantity) {
         dish.addIngredient(ingredient, quantity);
+        notifyUpdate();
     }
 
     @Override
     public void removeIngredientFromDish(Dish dish, Ingredient ingredient) {
         dish.removeIngredient(ingredient);
+        notifyUpdate();
     }
 
     @Override
     public void setRecipe(Dish dish, Map<Ingredient, Number> recipe) {
         dish.setRecipe(recipe);
+        notifyUpdate();
     }
 
     @Override
@@ -164,6 +208,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
+        notifyUpdate();
     }
 
     @Override
@@ -212,6 +257,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
         stockManager.addIngredient(newIngredient, newIngredientStock);
         ingredients.add(newIngredient);
+        notifyUpdate();
         return newIngredient;
     }
 
@@ -230,6 +276,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             ingredients.remove(ingredient);
             stockManager.removeIngredient(ingredient);
         }
+        notifyUpdate();
     }
 
     @Override
@@ -240,6 +287,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } catch (InvalidStockItemException e) {
             e.printStackTrace();
         }
+        notifyUpdate();
     }
 
     @Override
@@ -276,6 +324,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     public Supplier addSupplier(String name, Number distance) {
         Supplier newSupplier = new Supplier(name, distance);
         suppliers.add(newSupplier);
+        notifyUpdate();
         return newSupplier;
     }
 
@@ -289,6 +338,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
         //If it got through those checks without any exception, we can remove it!
         suppliers.remove(supplier);
+        notifyUpdate();
     }
 
     @Override
@@ -305,12 +355,14 @@ public class ServerApplication extends Thread implements ServerInterface {
     public Drone addDrone(Number speed) {
         Drone newDrone = new Drone(speed);
         drones.add(newDrone);
+        notifyUpdate();
         return newDrone;
     }
 
     @Override
     public void removeDrone(Drone drone) throws UnableToDeleteException {
         drones.remove(drone);
+        notifyUpdate();
     }
 
     @Override
@@ -332,12 +384,14 @@ public class ServerApplication extends Thread implements ServerInterface {
     public Staff addStaff(String name) {
         Staff newStaff = new Staff(name, stockManager);
         staff.add(newStaff);
+        notifyUpdate();
         return newStaff;
     }
 
     @Override
     public void removeStaff(Staff staff) throws UnableToDeleteException {
         this.staff.remove(staff);
+        notifyUpdate();
     }
 
     @Override
@@ -353,6 +407,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     @Override
     public void removeOrder(Order order) throws UnableToDeleteException {
         orders.remove(order);
+        notifyUpdate();
     }
 
     @Override
@@ -396,6 +451,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     @Override
     public void addPostcode(String code, Number distance) {
         postcodes.add(new Postcode(code, distance));
+        notifyUpdate();
     }
 
     @Override
@@ -405,6 +461,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         } else {
             throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
         }
+        notifyUpdate();
     }
 
     @Override
@@ -415,6 +472,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     public User addUser(String username, String password, String location, Postcode postcode) {
         User newUser = new User(username, password, location, postcode);
         users.add(newUser);
+        notifyUpdate();
         return newUser;
     }
 
@@ -425,55 +483,52 @@ public class ServerApplication extends Thread implements ServerInterface {
         } else {
             throw new UnableToDeleteException("Attempted to delete User while not safe to delete user.");
         }
-
-    }
-
-    @Override
-    public void run() {
-        try {
-            synchronized(this) {
-                while (!communication.getMessageStatus()) {
-                    this.wait();
-                }
-                Message message = communication.receiveMessage();
-                processMessage(message);
-
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        notifyUpdate();
     }
 
     private void processMessage(Message message) {
         MessageType type = message.getType();
 
         if (type == MessageType.REGISTER) {
+            System.out.println("Message Type: REGISTER");
             processRegister(message);
         } else if (type == MessageType.LOGIN) {
+            System.out.println("Message Type: LOGIN");
             processLogin(message);
         } else if (type == MessageType.GET_POSTCODES) {
+            System.out.println("Message Type: GET_POSTCODES");
             processGetPostcodes(message);
         } else if (type == MessageType.GET_DISHES) {
+            System.out.println("Message Type: GET_DISHES");
             processGetDishes(message);
         /**} else if (type == MessageType.GET_DISH_DESC) {
             processGetDishDesc(message);**/
         } else if (type == MessageType.GET_BASKET) {
+            System.out.println("Message Type: GET_BASKET");
             processGetBasket(message);
         } else if (type == MessageType.GET_BASKET_COST) {
+            System.out.println("Message Type: GET_BASKET_COST");
             processGetBasketCost(message);
         } else if (type == MessageType.GET_ORDERS) {
+            System.out.println("Message Type: GET_ORDERS");
             processGetOrders(message);
         } else if (type == MessageType.GET_STATUS) {
+            System.out.println("Message Type: GET_STATUS");
             processGetOrderStatus(message);
         } else if (type == MessageType.GET_COST) {
+            System.out.println("Message Type: GET_COST");
             processGetOrderCost(message);
         } else if (type == MessageType.SEND_DISH) {
+            System.out.println("Message Type: SEND_DISH");
             processAddDishToBasket(message);
         } else if (type == MessageType.SEND_CHECKOUT) {
+            System.out.println("Message Type: SEND_CHECKOUT");
             processUserCheckout(message);
         } else if (type == MessageType.SEND_CLEAR) {
+            System.out.println("Message Type: SEND_CLEAR");
             processBasketClear(message);
         } else if (type == MessageType.SEND_CANCEL) {
+            System.out.println("Message Type: SEND_CANCEL");
             processOrderCancel(message);
         }
     }
@@ -485,6 +540,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         users.add(newUser);
         Message reply = new Message(MessageType.REGISTER_SUCCESS, true);
         communication.sendMessage(uid, reply);
+        notifyUpdate();
     }
 
     private void processLogin(Message message) {
@@ -504,17 +560,18 @@ public class ServerApplication extends Thread implements ServerInterface {
             reply = new Message(MessageType.LOGIN_SUCCESS, false);
         }
         communication.sendMessage(uid, reply);
+        notifyUpdate();
     }
 
     private void processGetPostcodes(Message message) {
         int uid = message.getConnectionUID();
-        Message reply = new Message(MessageType.POSTCODES, this.getPostcodes());
+        Message reply = new Message(MessageType.POSTCODES, (ArrayList<Postcode>) this.getPostcodes());
         communication.sendMessage(uid, reply);
     }
 
     public void processGetDishes(Message message) {
         int uid = message.getConnectionUID();
-        Message reply = new Message(MessageType.DISHES, this.getDishes());
+        Message reply = new Message(MessageType.DISHES, (ArrayList<Dish>) this.getDishes());
         communication.sendMessage(uid, reply);
     }
 
@@ -605,7 +662,7 @@ public class ServerApplication extends Thread implements ServerInterface {
                 order.addDish((Dish) dishData.get(1), (int) dishData.get(2));
             }
         }
-
+        notifyUpdate();
     }
 
     public void processUserCheckout(Message message) {
@@ -619,6 +676,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             }
         }
         communication.sendMessage(uid, reply);
+        notifyUpdate();
     }
 
     public void processBasketClear(Message message) {
@@ -629,6 +687,7 @@ public class ServerApplication extends Thread implements ServerInterface {
                 order.clear();
             }
         }
+        notifyUpdate();
     }
 
     public void processOrderCancel(Message message) {
@@ -636,6 +695,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         //TODO : Fairly sure this doesn't work, and the same logical flaw also applies in multiple methods above too. I don't know how objects link and whether they continue to be .equals() after being serialised and passed along the Socket to the other application. Must do research on this.
         Order toCancel = (Order) message.getPayload();
         toCancel.cancelOrder();
+        notifyUpdate();
     }
 
     @Override
@@ -645,6 +705,6 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public void notifyUpdate() {
-
+        serverWindow.refreshAll();
     }
 }

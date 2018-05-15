@@ -5,6 +5,7 @@ import client.ClientInterface;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -15,41 +16,73 @@ import static common.MessageType.*;
  * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
  * @author Oscar van Leusen
  */
-public class CommsClient implements Comms {
+public class CommsClient extends Thread implements Comms {
 
     private boolean newMessage = false;
     private ClientInterface client;
+    private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private final int port;
-    private Queue<Message> messages;
+    private Queue<Message> messages = new LinkedList<>();
+    private boolean firstMessage = true;
 
-    public CommsClient(ClientInterface client, int port) throws IOException {
+    public CommsClient(ClientInterface client, int port) {
         this.client = client;
         this.port = port;
-        InetAddress localIP = InetAddress.getLocalHost();
-        Socket socket = new Socket(localIP, port);
-        if (socket.isConnected()) {
-            System.out.println("Client connected to server!");
-        }
-        in = new ObjectInputStream(socket.getInputStream());
-        out = new ObjectOutputStream(socket.getOutputStream());
 
-        //Passes the hashCode of the ClientInterface to act as a UID so that the server knows what client it's talking to.
-        out.writeInt(client.hashCode());
-        if (in.readBoolean()) {
-            System.out.println("Connected to Server");
-        }
-
-        while (true) {
-            Message received = null;
-            try {
-                received = (Message) in.readObject();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+        try {
+            //Gets the localhost IP address
+            InetAddress localIP = InetAddress.getLocalHost();
+            //Opens a socket on this IP
+            socket = new Socket(localIP, port);
+            if (socket.isConnected()) {
+                System.out.println("Client connected to server!");
             }
-            messages.add(received);
-            this.newMessage = true;
+
+            System.out.println("out");
+            out = new ObjectOutputStream(socket.getOutputStream());
+            System.out.println("in");
+            in = new ObjectInputStream(socket.getInputStream());
+            //Passes the hashCode of the ClientInterface to act as a UID so that the server knows what client it's talking to.
+            if (firstMessage) {
+                out.writeObject(client.hashCode());
+                System.out.println("sent hashcode");
+                out.flush();
+                firstMessage = false;
+            }
+
+            this.start();
+
+            client.notifyAll();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            //client.notifyAll();
+            System.out.println("checking");
+            Message received = null;
+            synchronized (messages) {
+                try {
+                    received = (Message) in.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    try {
+                        socket.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    e.printStackTrace();
+                }
+                if (received != null) {
+                    messages.add(received);
+                    this.newMessage = true;
+                }
+            }
         }
     }
 
@@ -77,9 +110,15 @@ public class CommsClient implements Comms {
      */
     @Override
     public Message receiveMessage() {
-        Message currentMessage = messages.remove();
-        MessageType messageType = currentMessage.getType();
-        return messages.remove();
+        synchronized (messages) {
+            if (messages != null) {
+                Message currentMessage = messages.remove();
+                MessageType messageType = currentMessage.getType();
+                return messages.remove();
+            } else {
+                return null;
+            }
+        }
     }
 
     /**
@@ -89,11 +128,13 @@ public class CommsClient implements Comms {
      */
     @Override
     public Message receiveMessage(MessageType type) {
-        for (Message message : messages) {
-            if (message.getType() == type) {
-                Message messageFound = message;
-                messages.remove(message);
-                return messageFound;
+        synchronized (messages) {
+            for (Message message : messages) {
+                if (message.getType() == type) {
+                    Message messageFound = message;
+                    messages.remove(message);
+                    return messageFound;
+                }
             }
         }
         return null;
@@ -102,5 +143,9 @@ public class CommsClient implements Comms {
     @Override
     public boolean getMessageStatus() {
         return this.newMessage;
+    }
+
+    public boolean initialised() {
+        return !firstMessage;
     }
 }

@@ -27,14 +27,14 @@ public class StockItem {
             this.isDish = true;
             this.isIngredient = false;
             this.amountStocked = (int) stock;
-            this.restockThreshold = (int) restockThreshold;
-            this.restockAmount = (int) restockAmount;
+            this.restockThreshold = restockThreshold.intValue();
+            this.restockAmount = restockAmount.intValue();
         } else if (stockItem instanceof Ingredient) {
             this.isIngredient = true;
             this.isDish = false;
             this.amountStocked = stock;
-            this.restockThreshold = (long) restockThreshold;
-            this.restockAmount = (long) restockAmount;
+            this.restockThreshold = restockThreshold.longValue();
+            this.restockAmount = restockAmount.longValue();
         } else {
             throw new InvalidStockItemException("Non-valid stock item (not common.Dish or common.Ingredient) was used");
         }
@@ -62,7 +62,7 @@ public class StockItem {
         if (isDish) {
             amountStocked = stock.intValue();
         }
-        amountStocked = (long) stock;
+        amountStocked = stock.longValue();
     }
 
     public long getStock() {
@@ -76,9 +76,9 @@ public class StockItem {
     public void setRestockThreshold(Number restockThreshold) {
         //If it's a dish, we only allow integer restock thresholds
         if (isDish) {
-            this.restockThreshold = (int) restockThreshold;
+            this.restockThreshold = restockThreshold.intValue();
         }
-        this.restockThreshold = (long) restockThreshold;
+        this.restockThreshold = restockThreshold.longValue();
     }
 
     public long getRestockAmount() {
@@ -88,9 +88,9 @@ public class StockItem {
     public void setRestockAmount(Number restockAmount) {
         //If it's a dish, the restock amount must be an integer amount.
         if (isDish) {
-            this.restockAmount = (int) restockAmount;
+            this.restockAmount = restockAmount.intValue();
         }
-        this.restockAmount = (long) restockAmount;
+        this.restockAmount = restockAmount.longValue();
     }
 
     public boolean isDish() {

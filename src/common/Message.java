@@ -8,11 +8,11 @@ import java.io.Serializable;
 public class Message implements Serializable {
 
     private MessageType type;
-    private Object payload;
+    private Serializable payload;
     //If this message was sent from a client or is directed to a client, it must contain its UID so that we know 'who' to send it to.
     private int connectionUID = 0;
 
-    public Message(MessageType type, Object payload) {
+    public Message(MessageType type, Serializable payload) {
         this.type = type;
         this.payload = payload;
     }
@@ -23,7 +23,7 @@ public class Message implements Serializable {
      */
     public Message(MessageType requestType) {
         this.type = requestType;
-        this.payload = null;
+        this.payload = new String("No Object");
     }
 
     /**
@@ -38,7 +38,7 @@ public class Message implements Serializable {
      * Gets the payload object, if one exists.
      * @return : Payload Object, which can later be cast.
      */
-    public Object getPayload() {
+    public Serializable getPayload() {
         return this.payload;
     }
 

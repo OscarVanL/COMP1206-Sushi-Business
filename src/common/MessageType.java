@@ -1,9 +1,11 @@
 package common;
 
+import java.io.Serializable;
+
 /**
  * @author Oscar van Leusen
  */
-public enum MessageType {
+public enum MessageType implements Serializable {
     REGISTER, REGISTER_SUCCESS,
     LOGIN, LOGIN_SUCCESS,
     GET_POSTCODES, POSTCODES,

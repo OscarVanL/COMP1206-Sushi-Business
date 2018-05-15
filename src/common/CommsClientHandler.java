@@ -5,6 +5,7 @@ import server.ServerWindow;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.Queue;
 
 /**
@@ -20,7 +21,8 @@ public class CommsClientHandler extends Thread {
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
     private int clientUID;
-    private Queue<Message> messages;
+    private Queue<Message> messages = new LinkedList<>();
+    private boolean firstPayload = true;
 
     public CommsClientHandler(Socket socket, ObjectInputStream in, ObjectOutputStream out, CommsServer commsServer, ServerInterface serverApp) {
         this.socket = socket;
@@ -28,30 +30,51 @@ public class CommsClientHandler extends Thread {
         this.out = out;
         this.commsServer = commsServer;
         this.serverApp = serverApp;
-        Object receivedPayload;
-        boolean firstPayload = true;
+    }
 
+    @Override
+    public void run() {
+        Object receivedPayload;
         while (true) {
+            System.out.println("entered while true");
             synchronized(serverApp) {
                 try {
-                    receivedPayload = in.readObject();
                     //If this is the first thing we've received, it's the client telling us its UID, so store this.
                     if (firstPayload) {
-                        clientUID = (Integer) receivedPayload;
-                        out.writeBoolean(true);
+
+                        System.out.println("reading from client");
+                        receivedPayload = in.readObject();
+                        clientUID = (int) receivedPayload;
+                        System.out.println("received client UID: " + clientUID);
+
+                        out.flush();
+                        firstPayload = false;
+
                     } else {
-                        Message receivedMessage = (Message) receivedPayload;
-                        receivedMessage.setConnectionUID(clientUID);
-                        messages.add(receivedMessage);
-                        commsServer.setMessageStatus(true);
-                        serverApp.notify();
+                        System.out.println("waiting for message");
+                        Message received = null;
+                        try {
+                            received = (Message) in.readObject();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (received != null) {
+                            System.out.println("Received message!");
+                            received.setConnectionUID(clientUID);
+                            synchronized (messages) {
+                                messages.add(received);
+                                commsServer.setMessageStatus(true);
+                                serverApp.notify();
+                            }
+                        }
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
+                } catch (IOException | ClassNotFoundException e) {
+                    Thread.currentThread().interrupt();
                     e.printStackTrace();
                 }
             }
+
         }
     }
 
@@ -74,6 +97,9 @@ public class CommsClientHandler extends Thread {
     }
 
     public Message receiveMessage() {
-        return messages.remove();
+        synchronized (messages) {
+            commsServer.setMessageStatus(false);
+            return messages.remove();
+        }
     }
 }

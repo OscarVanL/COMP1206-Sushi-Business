@@ -13,12 +13,12 @@ import java.util.List;
  * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
  * @author Oscar van Leusen
  */
-public class CommsServer implements Comms {
+public class CommsServer extends Thread implements Comms {
     private boolean newMessage = false;
     private ServerSocket serverSocket;
     private ServerInterface server;
     private int port;
-    private List<Thread> clientConnections;
+    private ArrayList<Thread> clientConnections;
 
     public CommsServer(ServerInterface server, int port) throws IOException {
         this.server = server;
@@ -26,8 +26,13 @@ public class CommsServer implements Comms {
         serverSocket = new ServerSocket(port);
         clientConnections = new ArrayList<>();
 
+    }
+
+    @Override
+    public void run() {
         while (true) {
             Socket socket = null;
+            System.out.println("waiting for another connection");
 
             try {
                 //Socket object receives incoming client requests, this is blocked until a client is connected
@@ -39,16 +44,20 @@ public class CommsServer implements Comms {
 
                 System.out.println("Assigning thread to this client");
 
+                //TODO: Bug is here, clientConnections.add is never ran because thread is never left.
                 Thread thread = new CommsClientHandler(socket, in, out, this, server);
                 clientConnections.add(thread);
-
                 thread.start();
+
             } catch (Exception e) {
-                socket.close();
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 System.out.println(e);
             }
         }
-
     }
 
     /**
@@ -92,12 +101,16 @@ public class CommsServer implements Comms {
      */
     @Override
     synchronized public Message receiveMessage() {
+        this.newMessage = false;
         Message message;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
             message = client.receiveMessage();
             if (!message.equals(null)) {
+                System.out.println("Received message in CommsServer");
                 return message;
+            } else {
+                System.out.println("Received message contained null.");
             }
         }
         return null;
@@ -110,11 +123,13 @@ public class CommsServer implements Comms {
      */
     @Override
     synchronized public Message receiveMessage(MessageType type) {
+        this.newMessage = false;
         Message message;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
             message = client.receiveMessage();
-            if (!message.equals(null) && message.getType() == type) {
+            if (message.getType() == type) {
+                System.out.println("Received message of type: " + type);
                 return message;
             }
         }
