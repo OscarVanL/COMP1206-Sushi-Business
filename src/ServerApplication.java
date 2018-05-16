@@ -38,26 +38,25 @@ public class ServerApplication extends Thread implements ServerInterface {
         ServerApplication app = (ServerApplication) serverInterface;
         app.serverWindow = app.launchGUI(serverInterface);
 
+        try {
+            app.loadConfiguration("ConfigurationExample.txt");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
         Thread commsThread;
         try {
             commsThread = new CommsServer(serverInterface, 5000);
             communication = (CommsServer) commsThread;
             commsThread.start();
+            app.start();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        app.start();
-        try {
-            app.loadConfiguration("ConfigurationExample.txt");
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void run() {
-        System.out.println("entered run");
         while (true) {
             System.out.print("");
             if (communication.getMessageStatus()) {
@@ -373,8 +372,13 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public void removeStaff(Staff staff) throws UnableToDeleteException {
-        this.staff.remove(staff);
-        notifyUpdate();
+        if (staff.getJobState() == Staff.JobState.IDLE) {
+            this.staff.remove(staff);
+            notifyUpdate();
+        } else {
+            throw new UnableToDeleteException("Attempted to remove Staff member when they are currently completing a job.");
+        }
+
     }
 
     @Override
@@ -389,8 +393,13 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public void removeOrder(Order order) throws UnableToDeleteException {
-        orders.remove(order);
-        notifyUpdate();
+        if (order.getOrderState() == Order.OrderState.CANCELLED) {
+            orders.remove(order);
+            notifyUpdate();
+        } else {
+            throw new UnableToDeleteException("Attempted to remove Order when it is not yet complete.");
+        }
+
     }
 
     @Override
@@ -411,13 +420,17 @@ public class ServerApplication extends Thread implements ServerInterface {
     public String getOrderStatus(Order order) {
         Order.OrderState state = order.getOrderState();
         if (state == Order.OrderState.BASKET) {
-            return "BASKET";
+            return "In Basket";
         } else if (state == Order.OrderState.PREPARING) {
-            return "PREPARING";
+            return "Preparing";
         } else if (state == Order.OrderState.DELIVERING) {
-            return "DELIVERING";
+            return "Delivering";
+        } else if (state == Order.OrderState.COMPLETE){
+            return "Completed";
+        } else if (state == Order.OrderState.CANCELLED) {
+            return "Cancelled";
         } else {
-            return "COMPLETE";
+            return "";
         }
     }
 
@@ -449,7 +462,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public List<User> getUsers() {
-        return users;
+        return this.users;
     }
 
     public User addUser(String username, String password, String location, Postcode postcode) {
@@ -702,12 +715,28 @@ public class ServerApplication extends Thread implements ServerInterface {
     }
 
     /**
-     * Gets all Orders and sends to the Client
+     * Gets all Orders for a particular user (if user is null, for all users) and sends to the Client
      * @param message : Request message from Client
      */
     public void processGetOrders(Message message) {
         int uid = message.getConnectionUID();
-        Message reply = new Message(MessageType.ORDERS, orders);
+        User clientUser = (User) message.getPayload();
+
+        Message reply;
+
+        if (clientUser == null) {
+            reply = new Message(MessageType.ORDERS, orders);
+        } else {
+            ArrayList<Order> userOrders = new ArrayList<>();
+
+            for (Order order : orders) {
+                if (order.getUser().getUsername().equals(clientUser.getUsername())) {
+                    userOrders.add(order);
+                }
+            }
+            reply = new Message(MessageType.ORDERS, userOrders);
+        }
+
         communication.sendMessage(uid, reply);
     }
 
@@ -726,21 +755,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             }
         }
 
-        String status;
-        Order.OrderState state = serverOrder.getOrderState();
-        if (state == Order.OrderState.BASKET) {
-            status = "In Basket";
-        } else if (state == Order.OrderState.PREPARING) {
-            status = "Preparing";
-        } else if (state == Order.OrderState.DELIVERING) {
-            status = "Delivering";
-        } else if (state == Order.OrderState.COMPLETE) {
-            status = "Order Complete";
-        } else if (state == Order.OrderState.CANCELLED) {
-            status = "Cancelled";
-        }else {
-            status = "";
-        }
+        String status = getOrderStatus(serverOrder);
         Message reply = new Message(MessageType.STATUS, status);
         communication.sendMessage(uid, reply);
     }

@@ -12,10 +12,10 @@ import java.util.Map;
  * @author Oscar van Leusen
  */
 public class Server implements ServerInterface {
-    ServerInterface server;
-    StockManager stockManager;
-    ArrayList<User> users;
-    ArrayList<Order> orders;
+    private ServerInterface server;
+    private StockManager stockManager;
+    private ArrayList<User> users;
+    private ArrayList<Order> orders;
 
     public Server(ServerInterface server, StockManager stockManager, ArrayList<User> users, ArrayList<Order> orders) {
         this.server = server;

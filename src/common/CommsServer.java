@@ -31,6 +31,15 @@ public class CommsServer extends Thread implements Comms {
     @Override
     public void run() {
         while (true) {
+
+            //Makes sure to clear clientConnections of any closed connections
+            for (Thread thread : clientConnections) {
+                CommsClientHandler comms = (CommsClientHandler) thread;
+                if (!comms.isRunning()) {
+                    clientConnections.remove(thread);
+                }
+            }
+
             Socket socket = null;
             System.out.println("waiting for another connection");
 
@@ -39,13 +48,9 @@ public class CommsServer extends Thread implements Comms {
                 socket = serverSocket.accept();
                 System.out.println("A client has connected");
 
-                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-
                 System.out.println("Assigning thread to this client");
 
-                //TODO: Bug is here, clientConnections.add is never ran because thread is never left.
-                Thread thread = new CommsClientHandler(socket, in, out, this, server);
+                Thread thread = new CommsClientHandler(socket, this);
                 clientConnections.add(thread);
                 thread.start();
 
@@ -106,7 +111,7 @@ public class CommsServer extends Thread implements Comms {
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
             message = client.receiveMessage();
-            if (!message.equals(null)) {
+            if (message != null) {
                 System.out.println("Received message in CommsServer");
                 return message;
             } else {

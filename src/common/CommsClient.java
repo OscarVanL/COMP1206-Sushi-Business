@@ -65,7 +65,6 @@ public class CommsClient extends Thread implements Comms {
     public void run() {
         while (true) {
             //client.notifyAll();
-            System.out.println("checking");
             Message received = null;
             try {
                 received = (Message) in.readObject();
@@ -86,9 +85,14 @@ public class CommsClient extends Thread implements Comms {
     @Override
     public boolean sendMessage(Serializable message) {
         try {
+            //A tiny delay stops the client from sending requests faster than the server can process them.
+            sleep(50);
             out.writeObject(message);
             return true;
         } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } catch (InterruptedException e) {
             e.printStackTrace();
             return false;
         }
@@ -113,11 +117,11 @@ public class CommsClient extends Thread implements Comms {
                     return messages.remove();
                 }
             }
-            try {
+            /**try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }**/
         } while (messages.isEmpty());
         return null;
     }
@@ -138,6 +142,11 @@ public class CommsClient extends Thread implements Comms {
                     }
                 }
             }
+            /**try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }**/
         } while (messages.isEmpty());
 
         return null;

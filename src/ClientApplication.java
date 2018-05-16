@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.Thread.sleep;
+
 /**
  * @author Oscar van Leusen
  */
-public class ClientApplication extends Thread implements ClientInterface {
+public class ClientApplication implements ClientInterface {
 
     //public static boolean ready = false;
     private ClientWindow clientWindow;
@@ -29,12 +31,12 @@ public class ClientApplication extends Thread implements ClientInterface {
         }).start();
 
         System.out.println("back in main");
+        try {
+            sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         ClientWindow window = app.launchGUI(clientInterface);
-    }
-
-    @Override
-    public void run() {
-
     }
 
     private static ClientInterface initialise() {
@@ -45,11 +47,13 @@ public class ClientApplication extends Thread implements ClientInterface {
     ClientWindow launchGUI(ClientInterface clientInterface) {
         System.out.println("entered launchGUI");
         synchronized (this) {
-            while (!comms.initialised()) {
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            if (comms != null) {
+                while (!comms.initialised()) {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             ClientWindow window = new ClientWindow(clientInterface);
@@ -87,7 +91,9 @@ public class ClientApplication extends Thread implements ClientInterface {
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.LOGIN_SUCCESS);
             //LOGIN_SUCCESS message returns User object corresponding to the login used (or null if incorrect login)
-            if (receivedMessage.getPayload() == null) {
+            if (receivedMessage == null) {
+                return null;
+            } else if (receivedMessage.getPayload() == null) {
                 return null;
             } else {
                 return (User) receivedMessage.getPayload();

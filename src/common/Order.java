@@ -144,11 +144,17 @@ public class Order extends Model implements Serializable {
     @Override
     public String toString() {
         StringBuilder orderDetails = new StringBuilder();
-        orderDetails.append(user.getName() + "'s order containing: ");
+        orderDetails.append(user.getName() + "'s order:");
+        boolean firstDish = true;
         for (Map.Entry<Dish, Integer> basketEntry : basket.entrySet()) {
-            orderDetails.append(basketEntry.getValue() + " orders of " + basketEntry.getKey().getName());
+            if (firstDish) {
+                orderDetails.append(" " + basketEntry.getValue() + " x " + basketEntry.getKey().getName());
+                firstDish = false;
+            } else {
+                orderDetails.append(", " + basketEntry.getValue() + " x " + basketEntry.getKey().getName());
+            }
+
         }
-        orderDetails.append(" totalling: " + this.orderPrice);
         return orderDetails.toString();
     }
 
