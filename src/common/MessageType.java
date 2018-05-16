@@ -18,7 +18,8 @@ public enum MessageType implements Serializable {
     GET_STATUS, STATUS,
     GET_COST, COST,
     //Messages sent from Client to sever
-    SEND_DISH,
+    ADD_DISH,
+    UPDATE_DISH,
     SEND_CHECKOUT, ORDER,
     SEND_CLEAR,
     SEND_CANCEL,

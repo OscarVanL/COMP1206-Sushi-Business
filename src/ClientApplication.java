@@ -120,24 +120,22 @@ public class ClientApplication extends Thread implements ClientInterface {
 
     @Override
     public String getDishDescription(Dish dish) {
-        return dish.getDishDescription();
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
+        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_DESC);
             return (String) receivedMessage.getPayload();
         }
-        return null;**/
+        return null;
     }
 
     @Override
     public Number getDishPrice(Dish dish) {
-        return dish.getPrice();
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
+        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_PRICE);
             return (long) receivedMessage.getPayload();
         }
-        return null;**/
+        return null;
     }
 
     @Override
@@ -168,32 +166,38 @@ public class ClientApplication extends Thread implements ClientInterface {
         dishToAdd.add(user);
         dishToAdd.add(dish);
         dishToAdd.add(quantity);
-        comms.sendMessage(new Message(MessageType.SEND_DISH, dishToAdd));
+        comms.sendMessage(new Message(MessageType.ADD_DISH, dishToAdd));
         notifyUpdate();
     }
 
     @Override
     public void updateDishInBasket(User user, Dish dish, Number quantity) {
-        //I call the add method here, because my add/update functionality in Order.class is the same as it checks for
-        //pre-existing matching dishes.
-        addDishToBasket(user, dish, quantity);
+        ArrayList<Object> dishToUpdate = new ArrayList<>();
+        dishToUpdate.add(user);
+        dishToUpdate.add(dish);
+        dishToUpdate.add(quantity);
+        comms.sendMessage(new Message(MessageType.UPDATE_DISH, dishToUpdate));
         notifyUpdate();
     }
 
     @Override
     public Order checkoutBasket(User user) {
-        boolean success = comms.sendMessage(MessageType.SEND_CHECKOUT);
+        boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
             notifyUpdate();
-            return (Order) receivedMessage.getPayload();
+            if (receivedMessage.getPayload() == null) {
+                return null;
+            } else {
+                return (Order) receivedMessage.getPayload();
+            }
         }
         return null;
     }
 
     @Override
     public void clearBasket(User user) {
-        comms.sendMessage(MessageType.SEND_CANCEL);
+        comms.sendMessage(new Message(MessageType.SEND_CANCEL));
         notifyUpdate();
     }
 

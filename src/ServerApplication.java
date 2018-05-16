@@ -484,8 +484,12 @@ public class ServerApplication extends Thread implements ServerInterface {
         } else if (type == MessageType.GET_DISHES) {
             System.out.println("Message Type: GET_DISHES");
             processGetDishes(message);
-        /**} else if (type == MessageType.GET_DISH_DESC) {
-            processGetDishDesc(message);**/
+        } else if (type == MessageType.GET_DISH_DESC) {
+            System.out.println("Message Type: GET_DISH_DESC");
+            processGetDishDesc(message);
+        } else if (type == MessageType.GET_DISH_PRICE) {
+            System.out.println("Message Type: GET_DISH_PRICE");
+            processGetDishPrice(message);
         } else if (type == MessageType.GET_BASKET) {
             System.out.println("Message Type: GET_BASKET");
             processGetBasket(message);
@@ -501,9 +505,12 @@ public class ServerApplication extends Thread implements ServerInterface {
         } else if (type == MessageType.GET_COST) {
             System.out.println("Message Type: GET_COST");
             processGetOrderCost(message);
-        } else if (type == MessageType.SEND_DISH) {
+        } else if (type == MessageType.ADD_DISH) {
             System.out.println("Message Type: SEND_DISH");
             processAddDishToBasket(message);
+        } else if (type == MessageType.UPDATE_DISH) {
+            System.out.println("Message Type: UPDATE_DISH");
+            processUpdateDishInBasket(message);
         } else if (type == MessageType.SEND_CHECKOUT) {
             System.out.println("Message Type: SEND_CHECKOUT");
             processUserCheckout(message);
@@ -516,16 +523,40 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+    /**
+     * Processes registration of new user from Client.
+     * In our reply we return true/false as payload depending if registration was successful (eg: username already in use).
+     * @param message : Message from Client.
+     */
     private void processRegister(Message message) {
         int uid = message.getConnectionUID();
         User newUser = (User) message.getPayload();
-        newUser.setClientUID(uid);
-        users.add(newUser);
-        Message reply = new Message(MessageType.REGISTER_SUCCESS, true);
+
+        boolean userExists = false;
+        for (User user : users) {
+            if (user.getUsername().equals(newUser.getUsername())) {
+                userExists = true;
+            }
+        }
+
+        Message reply;
+        if (!userExists) {
+            newUser.setClientUID(uid);
+            users.add(newUser);
+            reply = new Message(MessageType.REGISTER_SUCCESS, true);
+        } else {
+            reply = new Message(MessageType.REGISTER_SUCCESS, false);
+        }
+
         communication.sendMessage(uid, reply);
         notifyUpdate();
     }
 
+    /**
+     * Processes logins from Client.
+     * We return the User object if successful, and return false if not.
+     * @param message : Message from Client.
+     */
     private void processLogin(Message message) {
         int uid = message.getConnectionUID();
         Message reply;
@@ -533,113 +564,180 @@ public class ServerApplication extends Thread implements ServerInterface {
         boolean loginCorrect = false;
         User loggedIn = null;
         for (User user : users) {
-            //there's a user where both username and password match those entered, it was a correct login!
+            //If there's a user where both username and password match those entered, it was a correct login!
             if (user.getUsername().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
                 loggedIn = user;
                 loginCorrect = true;
             }
         }
-        reply = new Message(MessageType.LOGIN_SUCCESS);
         if (loginCorrect) {
             reply = new Message(MessageType.LOGIN_SUCCESS, loggedIn);
         } else {
-            reply = new Message(MessageType.LOGIN_SUCCESS, false);
+            reply = new Message(MessageType.LOGIN_SUCCESS, null);
         }
         communication.sendMessage(uid, reply);
         notifyUpdate();
     }
 
+    /**
+     * Sends list of Postcodes from the Server to the Client
+     * @param message : Request message from Client
+     */
     private void processGetPostcodes(Message message) {
         int uid = message.getConnectionUID();
         Message reply = new Message(MessageType.POSTCODES, (ArrayList<Postcode>) this.getPostcodes());
         communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Sends list of Dishes from the Server to the Client
+     * @param message : Request message from Client
+     */
     public void processGetDishes(Message message) {
         int uid = message.getConnectionUID();
         Message reply = new Message(MessageType.DISHES, (ArrayList<Dish>) this.getDishes());
         communication.sendMessage(uid, reply);
     }
 
-    //TODO: Same as other TODO, how does this work for objects passed to/from JREs with sockets.
-    /**public void processGetDishDesc(Message message) {
+    /**
+     * Sends the description for a Dish requested by Client
+     * @param message : Request message from Client
+     */
+    public void processGetDishDesc(Message message) {
         int uid = message.getConnectionUID();
-        Dish dishDescRequest = (Dish) message.getPayload();
-        Message reply = new Message(MessageType.DISH_DESC, dishDescRequest.getDishDescription());
-        communication.sendMessage(uid, reply);
-    }**/
+        //The client Dish is considered inconsistent with the Server dish (which may have changed)
+        //So we have to find the server's instance of the Dish (Names match).
+        Dish clientDish = (Dish) message.getPayload();
+        Dish serverDish = null;
 
-    /**public void processGetDishPrice(Message message) {
+        for (Dish dish : dishes) {
+            if (dish.getName().equals(clientDish.getName())) {
+                serverDish = dish;
+            }
+        }
+
+        Message reply;
+        if (serverDish != null) {
+            reply = new Message(MessageType.DISH_DESC, serverDish.getDishDescription());
+        } else {
+            reply = new Message(MessageType.DISH_DESC, null);
+        }
+        communication.sendMessage(uid, reply);
+    }
+
+    /**
+     * Sends the price of a Dish requested by the Client
+     * @param message : Request message from Client
+     */
+    public void processGetDishPrice(Message message) {
         int uid = message.getConnectionUID();
-        Dish dishPriceRequest = (Dish) message.getPayload();
-        Message reply = new Message(MessageType.DISH_PRICE, dishPriceRequest.getPrice());
-        communication.sendMessage(uid, reply);
-    }**/
+        //The client Dish is considered inconsistent with the Server dish (which may have changed)
+        //So we have to find the server's instance of the Dish (Names match).
+        Dish clientDish = (Dish) message.getPayload();
+        Dish serverDish = null;
 
+        for (Dish dish : dishes) {
+            if (dish.getName().equals(clientDish.getName())) {
+                serverDish = dish;
+            }
+        }
+
+        Message reply;
+        if (serverDish != null) {
+            reply = new Message(MessageType.DISH_PRICE, serverDish.getPrice());
+        } else {
+            reply = new Message(MessageType.DISH_PRICE, null);
+        }
+
+        communication.sendMessage(uid, reply);
+    }
+
+    /**
+     * Sends the Basket associated with a given User requested by the Client
+     * @param message : Request message from client
+     */
     public void processGetBasket(Message message) {
         int uid = message.getConnectionUID();
         User clientUser = (User) message.getPayload();
-        User basketUser = null;
+        User serverUser = null;
 
         for (User user: users) {
             if (user.getUsername().equals(clientUser.getUsername())) {
-                basketUser = user;
+                serverUser = user;
             }
         }
 
-        if (basketUser != null) {
-            Message reply = new Message(MessageType.BASKET);
-            for (Order order : orders) {
-                //If any Order object that is still in basket and for the requested user, this is the correct Order.
-                if (order.getUser().equals(basketUser)) {
-                    reply = new Message(MessageType.BASKET, order.getBasket());
-                }
+        Message reply = new Message(MessageType.BASKET, null);
+        for (Order order : orders) {
+            //If any Order object that is still in basket and for the requested user, this is the correct Order.
+            if (order.getUser().equals(serverUser)) {
+                reply = new Message(MessageType.BASKET, order.getBasket());
             }
-            communication.sendMessage(uid, reply);
         }
+        communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Gets the basket cost associated with a given User requested by the Client
+     * @param message : Request message from Client
+     */
     public void processGetBasketCost(Message message) {
         int uid = message.getConnectionUID();
         User clientUser = (User) message.getPayload();
-        User basketUser = null;
+        User serverUser = null;
 
         for (User user: users) {
             if (user.getUsername().equals(clientUser.getUsername())) {
-                basketUser = user;
+                serverUser = user;
             }
         }
 
-        Message reply = new Message(MessageType.BASKET_COST);
+        Message reply = new Message(MessageType.BASKET_COST, null);
         for (Order order : orders) {
-            if (order.getUser().equals(basketUser)) {
+            if (order.getUser().equals(serverUser)) {
                 reply = new Message(MessageType.BASKET_COST, order.getOrderPrice());
             }
         }
         communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Gets all Orders and sends to the Client
+     * @param message : Request message from Client
+     */
     public void processGetOrders(Message message) {
         int uid = message.getConnectionUID();
         Message reply = new Message(MessageType.ORDERS, orders);
         communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Gets the Order Status of a Order requested by the Client
+     * @param message : Request message from Client
+     */
     public void processGetOrderStatus(Message message) {
         int uid = message.getConnectionUID();
-        Order orderRequested = (Order) message.getPayload();
+        Order clientOrder = (Order) message.getPayload();
+        Order serverOrder = null;
+
+        for (Order order : orders) {
+            if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
+                serverOrder = order;
+            }
+        }
+
         String status;
-        Order.OrderState state = orderRequested.getOrderState();
+        Order.OrderState state = serverOrder.getOrderState();
         if (state == Order.OrderState.BASKET) {
-            status = "BASKET";
+            status = "In Basket";
         } else if (state == Order.OrderState.PREPARING) {
-            status = "PREPARING";
+            status = "Preparing";
         } else if (state == Order.OrderState.DELIVERING) {
-            status = "DELIVERING";
+            status = "Delivering";
         } else if (state == Order.OrderState.COMPLETE) {
-            status = "COMPLETE";
+            status = "Order Complete";
         } else if (state == Order.OrderState.CANCELLED) {
-            status = "CANCELLED";
+            status = "Cancelled";
         }else {
             status = "";
         }
@@ -647,31 +745,122 @@ public class ServerApplication extends Thread implements ServerInterface {
         communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Gets the Order Cost of a Order requested by the Client
+     * @param message : Request message from Client
+     */
     public void processGetOrderCost(Message message) {
         int uid = message.getConnectionUID();
-        Order orderRequested = (Order) message.getPayload();
-        Message reply = new Message(MessageType.COST, orderRequested.getOrderPrice());
+        Order clientOrder = (Order) message.getPayload();
+        Order serverOrder = null;
+
+        for (Order order : orders) {
+            if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
+                serverOrder = order;
+            }
+        }
+
+        Message reply = new Message(MessageType.COST, serverOrder.getOrderPrice());
         communication.sendMessage(uid, reply);
     }
 
+    /**
+     * Adds a Dish to the Basket in the Quantity requested by the Client
+     * @param message : Request message from Client
+     */
     public void processAddDishToBasket(Message message) {
-        int uid = message.getConnectionUID();
         //Structure: [0]User user, [1]Dish dish, [2] Number quantity
         ArrayList<Object> dishData = (ArrayList<Object>) message.getPayload();
-        for (Order order : orders) {
-            if (order.getUser().equals(dishData.get(0))) {
-                order.addDish((Dish) dishData.get(1), (int) dishData.get(2));
+        //Instances of User and Dish that the client has (may be outdated)
+        User clientUser = (User) dishData.get(0);
+        Dish clientDish = (Dish) dishData.get(1);
+
+        //We find instances of User and Dish that the server has (up to date)
+        User serverUser = null;
+        Dish serverDish = null;
+
+        for (User user : users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                serverUser = user;
+                break;
             }
         }
+
+        for (Dish dish : dishes) {
+            if (dish.getName().equals(clientDish.getName())) {
+                serverDish = dish;
+                break;
+            }
+        }
+
+        //Finally, looks for the order belonging to the User and updates its quantity.
+        for (Order order : orders) {
+            if (order.getUser().equals(serverUser)) {
+                order.addDish(serverDish, (int) dishData.get(2));
+            }
+        }
+
         notifyUpdate();
     }
 
+    /**
+     * Updates the quantity of a Dish in the Basket in the Quantity requested by the Client
+     * Note: If this dish is not already in the basket, it is added.
+     * @param message : Request message from Client
+     */
+    public void processUpdateDishInBasket(Message message) {
+        //Structure: [0]User user, [1]Dish dish, [2] Number newQuantity
+        ArrayList<Object> dishData = (ArrayList<Object>) message.getPayload();
+        //Instances of User and Dish that the client has (may be outdated).
+        User clientUser = (User) dishData.get(0);
+        Dish clientDish = (Dish) dishData.get(1);
+
+        //We find instances of User and Dish that the server has (up to date)
+        User serverUser = null;
+        Dish serverDish = null;
+
+        for (User user : users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                serverUser = user;
+                break;
+            }
+        }
+
+        for (Dish dish : dishes) {
+            if (dish.getName().equals(clientDish.getName())) {
+                serverDish = dish;
+                break;
+            }
+        }
+
+        for (Order order : orders) {
+            if (order.getUser().equals(serverUser)) {
+                order.updateDishQuantity(serverDish, (int) dishData.get(2));
+            }
+        }
+
+        notifyUpdate();
+    }
+
+    /**
+     * Checks out the Order requested by the Client
+     * @param message : Request message from Client
+     */
     public void processUserCheckout(Message message) {
         int uid = message.getConnectionUID();
-        User user = (User) message.getPayload();
+        //The User object the client has is considered outdated, so we need to look for the 'up to date' one on the server.
+        User clientUser = (User) message.getPayload();
+        User serverUser = null;
+
+        for (User user : users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                serverUser = user;
+            }
+        }
+
         Message reply = new Message(MessageType.ORDER, null);
         for (Order order : orders) {
-            if (order.getUser().equals(user)) {
+            if (order.getUser().equals(serverUser)) {
                 order.setOrderState(Order.OrderState.PREPARING);
                 reply = new Message(MessageType.ORDER, order);
             }
@@ -680,23 +869,43 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Clears the Basket requested by the Client
+     * @param message : Request message from Client
+     */
     public void processBasketClear(Message message) {
-        int uid = message.getConnectionUID();
-        User user = (User) message.getPayload();
-        for (Order order : orders) {
-            if (order.getUser().equals(user)) {
-                order.clear();
+        User clientUser = (User) message.getPayload();
+        User serverUser = null;
+
+        for (User user : users) {
+            if (user.getUsername().equals(clientUser.getUsername())) {
+                serverUser = user;
             }
         }
+        //Look for the order belonging to this User that is still in the basket
+        for (Order order : orders) {
+            if (order.getUser().equals(serverUser) && order.getOrderState() == Order.OrderState.BASKET) {
+                order.clear();
+                break;
+            }
+        }
+
         notifyUpdate();
     }
 
+    /**
+     * Process the client request to cancel a given Order.
+     * @param message : Request message from Client
+     */
     public void processOrderCancel(Message message) {
-        int uid = message.getConnectionUID();
-        //TODO : Fairly sure this doesn't work, and the same logical flaw also applies in multiple methods above too. I don't know how objects link and whether they continue to be .equals() after being serialised and passed along the Socket to the other application. Must do research on this.
-        Order toCancel = (Order) message.getPayload();
-        toCancel.cancelOrder();
-        notifyUpdate();
+        Order clientOrder = (Order) message.getPayload();
+
+        for (Order order : orders) {
+            if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
+                order.cancelOrder();
+                notifyUpdate();
+            }
+        }
     }
 
     @Override

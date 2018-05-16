@@ -32,10 +32,21 @@ public class Order extends Model implements Serializable {
         //If we already had this item in our basket, update the quantity in the basket.
         if (basket.containsKey(dish)) {
             notifyUpdate("dish quantity added", basket.get(dish), basket.get(dish) + quantity);
-            basket.put(dish, basket.get(dish) + quantity);
+            basket.replace(dish, basket.get(dish) + quantity);
         } else {
             notifyUpdate("dish added", 0, quantity);
             basket.put(dish, quantity);
+        }
+        calculatePrice();
+    }
+
+    public void updateDishQuantity(Dish dish, int newQuantity) {
+        if (basket.containsKey(dish)) {
+            notifyUpdate("dish quantity in basket updated", basket.get(dish), newQuantity);
+            basket.replace(dish, newQuantity);
+        } else {
+            notifyUpdate("dish added", 0, newQuantity);
+            basket.put(dish, newQuantity);
         }
         calculatePrice();
     }
