@@ -81,7 +81,6 @@ public class ClientApplication implements ClientInterface {
         }
     }
 
-    //TODO: login communications
     @Override
     public User login(String username, String password) {
         ArrayList<String> loginDetails = new ArrayList();
@@ -165,7 +164,6 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
-    //TODO: Think about a better structure than this. List<Object> is a risky structure for different types
     @Override
     public void addDishToBasket(User user, Dish dish, Number quantity) {
         ArrayList<Object> dishToAdd = new ArrayList<>();
@@ -217,24 +215,26 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
-    //TODO: Implement Order status logic
     @Override
     public boolean isOrderComplete(Order order) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.STATUS);
-            return false;
+            if (order.getOrderState() == Order.OrderState.COMPLETE | order.getOrderState() == Order.OrderState.CANCELLED) {
+                return true;
+            } else {
+                return false;
+            }
         }
         return false;
     }
 
-    //TODO: Implement Order status logic
     @Override
     public String getOrderStatus(Order order) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.STATUS);
-            return "";
+            return (String) receivedMessage.getPayload();
         }
         return "";
     }

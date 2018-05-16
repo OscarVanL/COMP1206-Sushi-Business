@@ -1,5 +1,6 @@
 package common;
 
+import exceptions.InvalidMessageException;
 import server.ServerInterface;
 
 import java.io.*;
@@ -75,7 +76,12 @@ public class CommsServer extends Thread implements Comms {
         boolean success = true;
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
-            boolean messageSent = client.sendMessage(message);
+            boolean messageSent = false;
+            try {
+                messageSent = client.sendMessage(message);
+            } catch (InvalidMessageException e) {
+                e.printStackTrace();
+            }
             if (!messageSent) {
                 success = false;
             }
@@ -94,7 +100,11 @@ public class CommsServer extends Thread implements Comms {
         for (Thread thread : clientConnections) {
             CommsClientHandler client = (CommsClientHandler) thread;
             if (client.getUID() == uid) {
-                return client.sendMessage(message);
+                try {
+                    return client.sendMessage(message);
+                } catch (InvalidMessageException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return false;

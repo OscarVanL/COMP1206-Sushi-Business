@@ -1,5 +1,6 @@
 package common;
 
+import exceptions.InvalidMessageException;
 import server.ServerInterface;
 import server.ServerWindow;
 
@@ -89,7 +90,10 @@ public class CommsClientHandler extends Thread {
         return this.clientUID;
     }
 
-    public boolean sendMessage(Serializable message) {
+    public boolean sendMessage(Serializable message) throws InvalidMessageException {
+        if (message == null) {
+            throw new InvalidMessageException("Attempted to send message to client with null content");
+        }
         try {
             out.writeObject(message);
             return true;
