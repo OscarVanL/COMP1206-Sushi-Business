@@ -429,6 +429,9 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public String getOrderStatus(Order order) {
+        if (order == null) {
+            return "In Basket";
+        }
         Order.OrderState state = order.getOrderState();
         if (state == Order.OrderState.BASKET) {
             return "In Basket";
@@ -745,19 +748,19 @@ public class ServerApplication extends Thread implements ServerInterface {
         int uid = message.getConnectionUID();
         User clientUser = (User) message.getPayload();
 
-        Message reply;
+        Message reply = new Message(MessageType.ORDERS, orders);
 
-        if (clientUser == null) {
-            reply = new Message(MessageType.ORDERS, orders);
-        } else {
+        if (clientUser != null) {
             ArrayList<Order> userOrders = new ArrayList<>();
 
             for (Order order : orders) {
-                if (order.getUser().getName().equals(clientUser.getName())) {
+                if (order.getUser().getName().equals(clientUser.getName()) && order.getOrderState() != Order.OrderState.BASKET) {
                     userOrders.add(order);
                 }
             }
-            reply = new Message(MessageType.ORDERS, userOrders);
+            if (userOrders.size() > 0) {
+                reply = new Message(MessageType.ORDERS, userOrders);
+            }
         }
 
         communication.sendMessage(uid, reply);
@@ -770,16 +773,17 @@ public class ServerApplication extends Thread implements ServerInterface {
     public void processGetOrderStatus(Message message) {
         int uid = message.getConnectionUID();
         Order clientOrder = (Order) message.getPayload();
-        Order serverOrder = null;
+
+        Message reply = new Message(MessageType.STATUS, Order.OrderState.BASKET);
 
         for (Order order : orders) {
             if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
-                serverOrder = order;
+                reply = new Message(MessageType.STATUS, getOrderStatus(order));
             }
         }
 
-        String status = getOrderStatus(serverOrder);
-        Message reply = new Message(MessageType.STATUS, status);
+
+
         communication.sendMessage(uid, reply);
     }
 
@@ -793,7 +797,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         Order serverOrder = null;
 
         for (Order order : orders) {
-            if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
+            if (order.getUser().getName().equals(clientOrder.getUser().getName()) && clientOrder.getUserOrderNum() == order.getUserOrderNum()) {
                 serverOrder = order;
             }
         }
@@ -886,24 +890,33 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     public void processUserCheckout(Message message) {
         int uid = message.getConnectionUID();
-        //The User object the client has is considered outdated, so we need to look for the 'up to date' one on the server.
-        User clientUser = (User) message.getPayload();
-        User serverUser = null;
+        Order order = (Order) message.getPayload();
+        Dish clientDish = null;
+        Dish serverDish = null;
+        HashMap<Dish, Number> serverOrderData = new HashMap<>();
 
-        for (User user : users) {
-            if (user.getName().equals(clientUser.getName())) {
-                serverUser = user;
+        //Gets all items in the basket and replaces the Dish with the server-side instance of the dish.
+        for (Map.Entry<Dish, Number> orderData : order.getBasket().entrySet()) {
+            clientDish = orderData.getKey();
+            for (Dish dish : dishes) {
+                if (clientDish.getName().equals(dish.getName())) {
+                    serverDish = dish;
+                }
+            }
+            if (serverDish != null) {
+                serverOrderData.put(serverDish, orderData.getValue());
             }
         }
 
-        Message reply = new Message(MessageType.ORDER, null);
-        for (Order order : orders) {
-            if (order.getUser().equals(serverUser)) {
-                order.setOrderState(Order.OrderState.PREPARING);
-                reply = new Message(MessageType.ORDER, order);
-            }
-        }
+        order.clear();
+        order.setBasket(serverOrderData);
+
+        orders.add(order);
+        order.setOrderState(Order.OrderState.PREPARING);
+
+        Message reply = new Message(MessageType.ORDER, order);
         communication.sendMessage(uid, reply);
+        notifyClient();
         notifyUpdate();
     }
 

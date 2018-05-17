@@ -17,7 +17,7 @@ import java.util.Queue;
  */
 public class CommsClientHandler extends Thread {
 
-    private boolean running = true;
+    private volatile boolean running = true;
     private CommsServer commsServer;
     private final Socket socket;
     private final ObjectInputStream in;

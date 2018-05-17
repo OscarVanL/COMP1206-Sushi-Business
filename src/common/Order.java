@@ -17,27 +17,33 @@ public class Order extends Model implements Serializable {
 
     //The price of the current order as an integer (Rather than float to avoid
     private Double orderPrice;
-    private HashMap<Dish, Integer> basket = new HashMap<>();
+    private HashMap<Dish, Number> basket = new HashMap<>();
     private User user;
+    private int orderNumber;
     private OrderState state;
 
-    public Order(User user) {
+    public Order(User user, int orderNumber) {
         this.orderPrice = 0.00;
         this.user = user;
         this.name = user.getName() + "'s order.";
+        this.orderNumber = orderNumber;
         this.state = BASKET;
     }
 
     public void addDish(Dish dish, int quantity) {
         //If we already had this item in our basket, update the quantity in the basket.
         if (basket.containsKey(dish)) {
-            notifyUpdate("dish quantity added", basket.get(dish), basket.get(dish) + quantity);
-            basket.replace(dish, basket.get(dish) + quantity);
+            notifyUpdate("dish quantity added", basket.get(dish), basket.get(dish).intValue() + quantity);
+            basket.replace(dish, basket.get(dish).intValue() + quantity);
         } else {
             notifyUpdate("dish added", 0, quantity);
             basket.put(dish, quantity);
         }
         calculatePrice();
+    }
+
+    public void addDishes(HashMap<Dish, Number> order) {
+        basket.putAll(order);
     }
 
     public void updateDishQuantity(Dish dish, int newQuantity) {
@@ -90,11 +96,11 @@ public class Order extends Model implements Serializable {
         //Make sure that this Dish is already in the basket, otherwise do nothing.
         if (basket.containsKey(dish)) {
             //If the amount we want to remove makes the quantity zero or lower, we remove the dish entirely.
-            if (basket.get(dish) - quantity <= 0) {
+            if (basket.get(dish).intValue() - quantity <= 0) {
                 removeDish(dish);
             } else {
-                notifyUpdate("dish quantity removed", basket.get(dish), basket.get(dish) - quantity);
-                basket.put(dish, basket.get(dish) - quantity);
+                notifyUpdate("dish quantity removed", basket.get(dish), basket.get(dish).intValue() - quantity);
+                basket.put(dish, basket.get(dish).intValue() - quantity);
             }
         }
         calculatePrice();
@@ -105,6 +111,7 @@ public class Order extends Model implements Serializable {
      * @return long : Total order price for all the items ordered.
      */
     public Double orderPrice() {
+        calculatePrice();
         return this.orderPrice;
     }
 
@@ -114,9 +121,9 @@ public class Order extends Model implements Serializable {
     public void calculatePrice() {
         Double oldPrice = this.orderPrice;
         this.orderPrice = 0.00;
-        for (Map.Entry<Dish, Integer> basketEntry : basket.entrySet()) {
+        for (Map.Entry<Dish, Number> basketEntry : basket.entrySet()) {
             Dish dish = basketEntry.getKey();
-            Integer quantity = basketEntry.getValue();
+            Integer quantity = basketEntry.getValue().intValue();
             this.orderPrice+=dish.dishPrice()*quantity;
         }
         if (oldPrice != orderPrice) {
@@ -129,18 +136,23 @@ public class Order extends Model implements Serializable {
      * Gets the user's basket
      * @return HashMap containing Dishes and quantity
      */
-    public HashMap<Dish, Integer> getBasket() {
+    public HashMap<Dish, Number> getBasket() {
         return this.basket;
     }
 
+    public void setBasket(HashMap<Dish, Number> newOrderData) {
+        this.basket.clear();
+        this.basket = newOrderData;
+    }
+
     public void cancelOrder() {
-        this.state = OrderState.CANCELLED;
+        setOrderState(OrderState.CANCELLED);
     }
 
     public synchronized void deliverOrder(int flyingSpeed) throws InterruptedException {
-        float sleepSeconds = ((float) user.getPostcode().getDistance() * 2) / flyingSpeed;
+        float sleepSeconds = ((float) user.getPostcode().getDistance() * 200) / flyingSpeed;
         Thread.sleep((long) (1000*sleepSeconds));
-        this.state = OrderState.COMPLETE;
+        setOrderState(OrderState.COMPLETE);
         System.out.println("Delivered order in " + sleepSeconds + " seconds.");
     }
 
@@ -153,7 +165,7 @@ public class Order extends Model implements Serializable {
         StringBuilder orderDetails = new StringBuilder();
         orderDetails.append(user.getName() + "'s order:");
         boolean firstDish = true;
-        for (Map.Entry<Dish, Integer> basketEntry : basket.entrySet()) {
+        for (Map.Entry<Dish, Number> basketEntry : basket.entrySet()) {
             if (firstDish) {
                 orderDetails.append(" " + basketEntry.getValue() + " x " + basketEntry.getKey().getName());
                 firstDish = false;
@@ -174,7 +186,13 @@ public class Order extends Model implements Serializable {
     }
 
     public void setOrderState(OrderState state) {
+        notifyUpdate("state", this.state, state);
         this.state = state;
+
+    }
+
+    public int getUserOrderNum() {
+        return this.orderNumber;
     }
 
     public OrderState getOrderState() {

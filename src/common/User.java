@@ -11,6 +11,7 @@ public class User extends Model implements Serializable {
     private String password;
     private String location;
     private Postcode postcode;
+    public int ordersMade = 0;
     //The UID of the client this user is logged in to. (-1 if not logged in)
     private int clientUID = -1;
 
@@ -77,5 +78,13 @@ public class User extends Model implements Serializable {
     @Override
     public String getName() {
         return this.username;
+    }
+
+    public void incrementOrdersMade() {
+        ordersMade++;
+    }
+
+    public int getOrdersMade() {
+        return ordersMade;
     }
 }

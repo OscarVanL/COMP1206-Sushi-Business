@@ -196,15 +196,18 @@ public class Configuration {
             //Structure: [0]ORDER:[1]User:[2]Quantity * Dish,Quantity * Dish ...
             String[] lineParse = line.split(":");
             User orderUser = null;
+            Order order = null;
             for (User user : server.getUsers()) {
                 if (user.getName().equals(lineParse[1])) {
                     orderUser = user;
+                    order = new Order(user, user.getOrdersMade());
+                    user.incrementOrdersMade();
                 }
             }
             if (orderUser == null) {
                 throw new InvalidUserException("Non-valid user: " + lineParse[1] + " entered for order when reading Configuration file.");
             }
-            Order order = new Order(orderUser);
+
 
             //Parse each ordered dish (separated by a comma), Structure: [0]Quantity * Dish, [1]Quantity * Dish, ...
             String[] orderContents = lineParse[2].split(",");
@@ -221,8 +224,11 @@ public class Configuration {
                     throw new InvalidDishException("Non-valid dish entered for " + orderUser.getName() + "'s order when reading configuration file.");
                 }
                 //Finally, adds the dish and quantity to the order.
-                order.addDish(orderDish, Integer.parseInt(orderInfo[0]));
-                order.setOrderState(Order.OrderState.PREPARING);
+                if (order != null) {
+                    order.addDish(orderDish, Integer.parseInt(orderInfo[0]));
+                    order.setOrderState(Order.OrderState.PREPARING);
+                    server.notifyUpdate();
+                }
             }
             server.addOrder(order);
         }

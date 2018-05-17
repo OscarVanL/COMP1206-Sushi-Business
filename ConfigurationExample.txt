@@ -16,7 +16,7 @@ USER:Oscar:password:Wessex Lane:SO18 2NU
 
 ORDER:Admin:5 * Sushi Roll,2 * Side Rice
 
-STOCK:Sushi Roll:9
+STOCK:Sushi Roll:10
 STOCK:Rice:300
 
 STAFF:Joshua

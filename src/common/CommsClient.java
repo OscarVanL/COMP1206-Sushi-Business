@@ -1,6 +1,8 @@
 package common;
 
 import client.ClientInterface;
+import exceptions.InvalidMessageException;
+import org.omg.CORBA.DynAnyPackage.Invalid;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -16,19 +18,18 @@ import java.util.Queue;
  */
 public class CommsClient extends Thread implements Comms {
 
-    private boolean running = false;
+    private volatile boolean running = false;
     private boolean newMessage = false;
+    private boolean newUpdateNotify = false;
     private ClientInterface client;
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private final int port;
     private Queue<Message> messages = new LinkedList<>();
     private boolean firstMessage = true;
 
     public CommsClient(ClientInterface client, int port) {
         this.client = client;
-        this.port = port;
 
         try {
             //Gets the localhost IP address
@@ -51,6 +52,9 @@ public class CommsClient extends Thread implements Comms {
                     out.flush();
                     firstMessage = false;
                 }
+
+                startServerNotifyCheck();
+
                 this.start();
                 client.notifyAll();
             }
@@ -66,10 +70,6 @@ public class CommsClient extends Thread implements Comms {
             try {
                 try {
                     received = (Message) in.readObject();
-                    if (received.getType() == MessageType.UPDATE) {
-                        System.out.println("Received message from server triggering update");
-                        client.notifyUpdate();
-                    }
                 } catch (SocketException e) {
                     System.out.println("Server has closed.");
                     socket.close();
@@ -94,26 +94,42 @@ public class CommsClient extends Thread implements Comms {
         }
     }
 
+    private void startServerNotifyCheck() {
+        //Thread that checks for messages from the server telling the client to update.
+        new Thread(() -> {
+            while (running) {
+                System.out.print("");
+                if (newUpdateNotify) {
+                    client.notifyUpdate();
+                    System.out.println("Updated client GUI as requested by server.");
+                    newUpdateNotify = false;
+                }
+            }
+        }).start();
+    }
+
 
     @Override
     public boolean sendMessage(Serializable message) {
         if (initialised()) {
-            try {
-                //A tiny delay stops the client from sending requests faster than the server can process them.
-                sleep(50);
-                out.writeObject(message);
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return false;
+            if (message instanceof Message) {
+                try {
+                    out.writeObject(message);
+                    return true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Sent invalid message type that wasn't of type 'Message'");
+                try {
+                    throw new InvalidMessageException("Sent invalid message type that wasn't of type 'Message'");
+                } catch (InvalidMessageException e) {
+                    e.printStackTrace();
+                }
             }
-        } else {
-            return false;
-        }
 
+        }
+        return false;
     }
 
     @Override
@@ -132,14 +148,14 @@ public class CommsClient extends Thread implements Comms {
         do {
             synchronized (messages) {
                 if (!messages.isEmpty() && initialised()) {
+                    Message message = messages.remove();
+                    if (message.getType() == MessageType.UPDATE) {
+                        messages.remove(message);
+                        this.newUpdateNotify = true;
+                    }
                     return messages.remove();
                 }
             }
-            /**try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }**/
         } while (messages.isEmpty());
         return null;
     }
@@ -154,17 +170,15 @@ public class CommsClient extends Thread implements Comms {
         do {
             synchronized (messages) {
                 for (Message message : messages) {
-                    if (message.getType() == type) {
+                    if (message.getType() == MessageType.UPDATE) {
+                        messages.remove(message);
+                        this.newUpdateNotify = true;
+                    } else if (message.getType() == type) {
                         messages.remove(message);
                         return message;
                     }
                 }
             }
-            /**try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }**/
         } while (messages.isEmpty());
 
         return null;

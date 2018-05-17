@@ -114,11 +114,10 @@ public class StockManager implements Serializable {
      * Called when the Staff have finished making an order, removes the number of each order from the stock.
      * @param order
      */
-    public void orderComplete(HashMap<Dish, Integer> order) {
-        for (Map.Entry<Dish, Integer> orderedItem : order.entrySet()) {
-
+    public void orderComplete(HashMap<Dish, Number> order) {
+        for (Map.Entry<Dish, Number> orderedItem : order.entrySet()) {
             Dish dish = orderedItem.getKey();
-            Integer number = orderedItem.getValue();
+            Integer number = orderedItem.getValue().intValue();
             dishStock.get(dish).removeStock(number);
         }
     }
@@ -194,30 +193,6 @@ public class StockManager implements Serializable {
         return stocks;
     }
 
-
-    /**
-     * Finds any dishes that are below stock levels and returns them
-     * Synchronized so that it is thread safe, that is that multiple Staff won't get the same dish returned and both restock the same dish.
-     * @return Dish : Dish to restock.
-     */
-    public synchronized Dish findDishToRestock() {
-        Dish toReturn = null;
-        //Iterate through every dish we need to stock.
-        for (Dish dish : dishStock.keySet()) {
-            StockItem stock = dishStock.get(dish);
-            //If there are items where the restock threshold exceeds the number of prepared dishes, we need to make more.
-            if (stock.getRestockThreshold() >= stock.getStock() && canMakeMinQuantity(dish) && !stock.beingRestocked()) {
-                stock.setBeingRestocked(true);
-                //If there are sufficient ingredients to make the restock amount
-                //Return the dish (to the staff to be made).
-                toReturn = dish;
-                break;
-            }
-        }
-        //If there are no dishes (with sufficient ingredient stock) to make, return null.
-        return toReturn;
-    }
-
     /**
      * Finds any ingredients that are below stock levels and returns them
      * Synchronized so that it is thread safe, that is that multiple Drones won't get the same ingredient returned and both restock the same ingredient.
@@ -225,7 +200,7 @@ public class StockManager implements Serializable {
      */
     public synchronized Ingredient findIngredientToRestock() {
         Ingredient toReturn = null;
-        //Iterate through every Ingredient we need to keep stocked.
+        //Iterate through every Ingredient we need to keep stocked above restock threshold.
         for (Ingredient ingredient : ingredientStock.keySet()) {
             StockItem stock = ingredientStock.get(ingredient);
 
@@ -236,6 +211,7 @@ public class StockManager implements Serializable {
                 break;
             }
         }
+
         //If there are no ingredients to restock, return null.
         return toReturn;
     }
@@ -279,11 +255,12 @@ public class StockManager implements Serializable {
 
 
             //If the restock amount is 0, it will be restocked back purely to the threshold.
+            //This can cause problems if we get an order that has a quantity greater than the restockThreshold
             if (dishData.getRestockAmount() == 0) {
                 dishData.setStock(dishData.getRestockThreshold());
             } else {
-                //Once the stock of a dish falls below the restock threshold, they are restocked up to restock threshold + the restock amount.
-                dishData.setStock(dishData.getRestockThreshold() + dishData.getRestockAmount());
+                //Once the stock of a dish falls below the restock threshold, they are restocked adding the restock amount to existing stock.
+                dishData.setStock(dishData.getStock() + dishData.getRestockAmount());
             }
 
             //Then deduct the ingredients required to make the dish
@@ -317,5 +294,13 @@ public class StockManager implements Serializable {
             }
             ingredientStock.get(ingredient).setBeingRestocked(false);
         }
+    }
+
+    public StockItem getStockItem(Ingredient ingredient) {
+        return ingredientStock.get(ingredient);
+    }
+
+    public StockItem getStockItem(Dish dish) {
+        return dishStock.get(dish);
     }
 }

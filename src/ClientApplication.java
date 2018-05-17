@@ -17,8 +17,10 @@ public class ClientApplication implements ClientInterface {
     //public static boolean ready = false;
     private ClientWindow clientWindow;
     private static CommsClient comms;
+    private User connectedUser;
     private List<UpdateListener> listeners = new ArrayList<>();
-    private Map<Dish, Number> basket = new HashMap<>();
+    private HashMap<Dish, Number> basket = new HashMap<>();
+    private int ordersMade = 0;
     //Prices can't be changed on the server side once a Dish has been made, so it's safe to store these locally
     //With no risk of the values becoming outdated.
 
@@ -77,6 +79,7 @@ public class ClientApplication implements ClientInterface {
             //REGISTER_SUCCESS messages return true or false boolean
             if ((boolean) receivedMessage.getPayload()) {
                 notifyUpdate();
+                this.connectedUser = newUser;
                 return newUser;
             } else {
                 notifyUpdate();
@@ -101,7 +104,8 @@ public class ClientApplication implements ClientInterface {
             } else if (receivedMessage.getPayload() == null) {
                 return null;
             } else {
-                return (User) receivedMessage.getPayload();
+                this.connectedUser = (User) receivedMessage.getPayload();
+                return connectedUser;
             }
         } else {
             notifyUpdate();
@@ -129,6 +133,9 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_DISHES));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISHES);
+            while (receivedMessage == null) {
+                receivedMessage = comms.receiveMessage(MessageType.DISHES);
+            }
             return (ArrayList<Dish>) receivedMessage.getPayload();
         }
         return null;
@@ -228,7 +235,11 @@ public class ClientApplication implements ClientInterface {
 
     @Override
     public Order checkoutBasket(User user) {
-        boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, user));
+        Order order = new Order(user, user.getOrdersMade());
+        user.incrementOrdersMade();
+        order.addDishes(basket);
+
+        boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
             notifyUpdate();
@@ -252,6 +263,9 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_ORDERS, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDERS);
+            while (receivedMessage == null) {
+                receivedMessage = comms.receiveMessage(MessageType.ORDERS);
+            }
             return (List<Order>) receivedMessage.getPayload();
         }
         return null;
@@ -276,6 +290,9 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.STATUS);
+            while (receivedMessage == null) {
+                receivedMessage = comms.receiveMessage(MessageType.STATUS);
+            }
             return (String) receivedMessage.getPayload();
         }
         return "";
@@ -286,6 +303,9 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_COST, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.COST);
+            while (receivedMessage == null) {
+                receivedMessage = comms.receiveMessage(MessageType.COST);
+            }
             return (Double) receivedMessage.getPayload();
         }
         return null;

@@ -36,23 +36,24 @@ public class Drone extends Model implements Runnable {
             toRestock = stockManager.findIngredientToRestock();
 
             if (toRestock != null) {
-                jobState = DroneState.FETCHING;
+                setDroneState(DroneState.FETCHING);
                 notifyUpdate();
                 currentlyRestocking = toRestock.getName();
                 stockManager.restockIngredient(toRestock, flyingSpeed);
                 currentlyRestocking = "";
-                jobState = DroneState.IDLE;
+                setDroneState(DroneState.IDLE);
             }
 
 
             //Finds any orders that need to be delivered
             for (Order order : orders) {
                 if (order.getOrderState() == Order.OrderState.PREPARED) {
-                    System.out.println("found ");
+                    setDroneState(DroneState.DELIVERING);
                     order.setOrderState(Order.OrderState.DELIVERING);
                     notifyUpdate();
                     try {
                         order.deliverOrder(this.flyingSpeed);
+                        setDroneState(DroneState.IDLE);
                         notifyUpdate();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -66,6 +67,11 @@ public class Drone extends Model implements Runnable {
 
     public DroneState getJobState() {
         return this.jobState;
+    }
+
+    private void setDroneState(DroneState state) {
+        notifyUpdate("drone state", this.jobState, state);
+        this.jobState = state;
     }
 
     public String jobSummary() {
