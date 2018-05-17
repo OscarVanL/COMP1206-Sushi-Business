@@ -240,19 +240,13 @@ public class StockManager implements Serializable {
      * Restocks the dish if it falls below the restock threshold.
      * @param dish : Dish to restock
      */
-    public void restockDish(Dish dish) {
+    public void restockDish(Dish dish) throws InterruptedException {
         if (dish != null) {
             StockItem dishData = dishStock.get(dish);
 
             //Waits between 20 and 60 seconds while the cook makes the dishes
             int randomNum = ThreadLocalRandom.current().nextInt(20, 61);
-            try {
-                Thread.sleep(1000*randomNum);
-            } catch (InterruptedException e) {
-                System.out.println("Staff cooking meal interrupted");
-            }
-
-
+            Thread.sleep(1000*randomNum);
 
             //If the restock amount is 0, it will be restocked back purely to the threshold.
             //This can cause problems if we get an order that has a quantity greater than the restockThreshold
@@ -273,17 +267,13 @@ public class StockManager implements Serializable {
         }
     }
 
-    public void restockIngredient(Ingredient ingredient, int flyingSpeed) {
+    public void restockIngredient(Ingredient ingredient, int flyingSpeed) throws InterruptedException {
         if (ingredient != null) {
             StockItem ingredientData = ingredientStock.get(ingredient);
 
             //Waits the time required for the drone to go to the supplier and back (supplier distance * 2) / speed.
             long sleepSeconds = (ingredient.getSupplier().getDistance() * 2) / flyingSpeed;
-            try {
-                Thread.sleep(1000*sleepSeconds);
-            } catch (InterruptedException e) {
-                System.out.println("Drone fetching ingredients interrupted");
-            }
+            Thread.sleep(1000*sleepSeconds);
 
             //If the restock amount is 0, it will be restocked back purely to the threshold.
             if (ingredientData.getRestockAmount() == 0) {

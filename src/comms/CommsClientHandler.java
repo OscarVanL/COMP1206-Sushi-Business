@@ -1,8 +1,6 @@
-package common;
+package comms;
 
 import exceptions.InvalidMessageException;
-import server.ServerInterface;
-import server.ServerWindow;
 
 import java.io.*;
 import java.net.Socket;
@@ -17,7 +15,7 @@ import java.util.Queue;
  */
 public class CommsClientHandler extends Thread {
 
-    private volatile boolean running = true;
+    private volatile boolean running;
     private CommsServer commsServer;
     private final Socket socket;
     private final ObjectInputStream in;
@@ -31,6 +29,7 @@ public class CommsClientHandler extends Thread {
         this.in = new ObjectInputStream(socket.getInputStream());
         this.out = new ObjectOutputStream(socket.getOutputStream());
         this.commsServer = commsServer;
+        this.running = true;
     }
 
     @Override
@@ -55,6 +54,7 @@ public class CommsClientHandler extends Thread {
                     Message received = null;
                     try {
                         received = (Message) in.readObject();
+                        System.out.println("received message");
                     } catch (SocketException e) {
                         System.out.println("Client has disconnected.");
                         socket.close();
@@ -115,5 +115,9 @@ public class CommsClientHandler extends Thread {
 
     public boolean isRunning() {
         return running;
+    }
+
+    public void cancelThread() {
+        this.running = false;
     }
 }

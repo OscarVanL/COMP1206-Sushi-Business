@@ -1,4 +1,7 @@
 import common.*;
+import comms.CommsServer;
+import comms.Message;
+import comms.MessageType;
 import exceptions.*;
 import server.ServerInterface;
 import server.ServerWindow;
@@ -15,8 +18,10 @@ import java.util.Map;
  */
 public class ServerApplication extends Thread implements ServerInterface {
 
+    private static Thread commsThread = null;
     private ServerWindow serverWindow;
     private Configuration config;
+    private DataPersistence backup;
     private static CommsServer communication;
 
     private StockManager stockManager = new StockManager();
@@ -39,21 +44,31 @@ public class ServerApplication extends Thread implements ServerInterface {
         ServerApplication app = (ServerApplication) serverInterface;
 
         app.serverWindow = app.launchGUI(serverInterface);
+        //startComms(app);
+    }
 
-        Thread commsThread;
+    public static void startComms(ServerApplication app) {
+        if (commsThread == null) {
+            initialiseComms();
+            app.start();
+        }
+    }
+
+    private static void initialiseComms() {
         try {
-            commsThread = new CommsServer(serverInterface, 5000);
+            commsThread = new CommsServer(7734);
             communication = (CommsServer) commsThread;
             commsThread.start();
-            app.start();
+            running = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private static boolean running = true;
     @Override
     public void run() {
-        while (true) {
+        while (running) {
             System.out.print("");
             if (communication.getMessageStatus()) {
                 Message message = communication.receiveMessage();
@@ -92,14 +107,36 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     @Override
     public void loadConfiguration(String filename) throws FileNotFoundException {
-        //Remove ANY stored data before loading.
-        for (Thread thread : staff.values()) {
-            thread.interrupt();
+        //Before loading our configuration, close any existing threads and empty any stored values.
+        for (Staff staffMember : staff.keySet()) {
+            staffMember.cancelThread();
+            staff.get(staffMember).interrupt();
         }
+        for (Drone drone : drones.keySet()) {
+            drone.cancelThread();
+            drones.get(drone).interrupt();
+        }
+        stockManager = new StockManager();
+        listeners.clear();
+        suppliers.clear();
+        ingredients.clear();
+        dishes.clear();
+        postcodes.clear();
+        users.clear();
+        orders.clear();
+        staff.clear();
+        drones.clear();
+        ingredientsRestocked = true;
+        dishesRestocked = true;
+
+        if (communication != null) communication.dropConnections();
+        startComms(this);
+
         try {
             Server server = new Server(this, stockManager, users, orders);
             config = new Configuration(server, filename);
             config.loadConfiguration();
+            backup = new DataPersistence(server, stockManager, users, orders);
             notifyUpdate();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
             e.printStackTrace();
@@ -596,6 +633,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             if (user.getName().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
                 loggedIn = user;
                 loginCorrect = true;
+                break;
             }
         }
         if (loginCorrect) {
@@ -781,8 +819,6 @@ public class ServerApplication extends Thread implements ServerInterface {
                 reply = new Message(MessageType.STATUS, getOrderStatus(order));
             }
         }
-
-
 
         communication.sendMessage(uid, reply);
     }

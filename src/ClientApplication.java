@@ -1,6 +1,9 @@
 import client.ClientInterface;
 import client.ClientWindow;
 import common.*;
+import comms.CommsClient;
+import comms.Message;
+import comms.MessageType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +34,7 @@ public class ClientApplication implements ClientInterface {
         new Thread(() -> {
             synchronized (app) {
                 System.out.println("launching comms");
-                CommsClient clientComms = new CommsClient(app, 5000);
+                CommsClient clientComms = new CommsClient(app, 7734);
                 comms = clientComms;
             }
         }).start();
@@ -242,8 +245,8 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
-            notifyUpdate();
-            if (receivedMessage.getPayload() == null) {
+            this.clearBasket(user);
+            if (receivedMessage == null) {
                 return null;
             } else {
                 return (Order) receivedMessage.getPayload();

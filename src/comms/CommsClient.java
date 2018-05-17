@@ -1,8 +1,7 @@
-package common;
+package comms;
 
 import client.ClientInterface;
 import exceptions.InvalidMessageException;
-import org.omg.CORBA.DynAnyPackage.Invalid;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -70,7 +69,7 @@ public class CommsClient extends Thread implements Comms {
             try {
                 try {
                     received = (Message) in.readObject();
-                } catch (SocketException e) {
+                } catch (SocketException | EOFException e) {
                     System.out.println("Server has closed.");
                     socket.close();
                     in.close();
@@ -146,14 +145,21 @@ public class CommsClient extends Thread implements Comms {
     public Message receiveMessage() {
         //Tries to receive the message a few times because of timing differences. Bit of a hacky solution but oh well.
         do {
-            synchronized (messages) {
-                if (!messages.isEmpty() && initialised()) {
-                    Message message = messages.remove();
-                    if (message.getType() == MessageType.UPDATE) {
-                        messages.remove(message);
-                        this.newUpdateNotify = true;
+            for (int i=0; i<5; i++) {
+                synchronized (messages) {
+                    if (!messages.isEmpty() && initialised()) {
+                        Message message = messages.remove();
+                        if (message.getType() == MessageType.UPDATE) {
+                            messages.remove(message);
+                            this.newUpdateNotify = true;
+                        }
+                        return messages.remove();
                     }
-                    return messages.remove();
+                }
+                try {
+                    sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         } while (messages.isEmpty());
@@ -168,15 +174,22 @@ public class CommsClient extends Thread implements Comms {
     @Override
     public Message receiveMessage(MessageType type) {
         do {
-            synchronized (messages) {
-                for (Message message : messages) {
-                    if (message.getType() == MessageType.UPDATE) {
-                        messages.remove(message);
-                        this.newUpdateNotify = true;
-                    } else if (message.getType() == type) {
-                        messages.remove(message);
-                        return message;
+            for (int i=0; i<5; i++) {
+                synchronized (messages) {
+                    for (Message message : messages) {
+                        if (message.getType() == MessageType.UPDATE) {
+                            messages.remove(message);
+                            this.newUpdateNotify = true;
+                        } else if (message.getType() == type) {
+                            messages.remove(message);
+                            return message;
+                        }
                     }
+                }
+                try {
+                    sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         } while (messages.isEmpty());

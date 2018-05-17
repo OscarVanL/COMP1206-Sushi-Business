@@ -10,7 +10,7 @@ public class Drone extends Model implements Runnable {
     public enum DroneState {
         IDLE, FETCHING, DELIVERING
     }
-
+    private volatile boolean threadRunning = true;
     private String droneName;
     private DroneState jobState;
     private StockManager stockManager;
@@ -31,7 +31,7 @@ public class Drone extends Model implements Runnable {
     public void run() {
         Ingredient toRestock;
         //Restocks ingredients and delivers orders.
-        while(true) {
+        while(threadRunning) {
             //Finds any ingredients that need to be restocked (returns null if there are none).
             toRestock = stockManager.findIngredientToRestock();
 
@@ -39,7 +39,12 @@ public class Drone extends Model implements Runnable {
                 setDroneState(DroneState.FETCHING);
                 notifyUpdate();
                 currentlyRestocking = toRestock.getName();
-                stockManager.restockIngredient(toRestock, flyingSpeed);
+                try {
+                    stockManager.restockIngredient(toRestock, flyingSpeed);
+                } catch (InterruptedException e) {
+                    System.out.println("Drone restocking interrupted");
+                    break;
+                }
                 currentlyRestocking = "";
                 setDroneState(DroneState.IDLE);
             }
@@ -56,11 +61,10 @@ public class Drone extends Model implements Runnable {
                         setDroneState(DroneState.IDLE);
                         notifyUpdate();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        System.out.println("Drone delivery interrupted");
+                        break;
                     }
                 }
-                //Breaks after delivering order so that lots of ready orders don't prevent drones from collecting ingredients.
-                break;
             }
         }
     }
@@ -74,7 +78,7 @@ public class Drone extends Model implements Runnable {
         this.jobState = state;
     }
 
-    public String jobSummary() {
+    private String jobSummary() {
         if (this.jobState == DroneState.IDLE) {
             return "Idle";
         } else if (this.jobState == DroneState.FETCHING) {
@@ -98,5 +102,9 @@ public class Drone extends Model implements Runnable {
     @Override
     public String getName() {
         return this.droneName;
+    }
+
+    public void cancelThread() {
+        this.threadRunning = false;
     }
 }

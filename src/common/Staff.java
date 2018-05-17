@@ -14,7 +14,7 @@ public class Staff extends Model implements Runnable {
         IDLE, COOKING
     }
 
-    boolean threadRunning = true;
+    private volatile boolean threadRunning = true;
     private String staffName;
     private StaffState jobState;
     private StockManager stockManager;
@@ -38,7 +38,12 @@ public class Staff extends Model implements Runnable {
                 jobState = StaffState.COOKING;
                 //Adds the restock amount to the stock for this dish.
                 currentlyMaking = toRestock.getName();
-                stockManager.restockDish(toRestock);
+                try {
+                    stockManager.restockDish(toRestock);
+                } catch (InterruptedException e) {
+                    System.out.println("Staff restocking interrupted");
+                    break;
+                }
                 currentlyMaking = "";
                 jobState = StaffState.IDLE;
             }
@@ -51,6 +56,7 @@ public class Staff extends Model implements Runnable {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 System.out.println("Staff break interrupted");
+                break;
             }
         }
     }
