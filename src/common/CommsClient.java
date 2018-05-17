@@ -66,6 +66,10 @@ public class CommsClient extends Thread implements Comms {
             try {
                 try {
                     received = (Message) in.readObject();
+                    if (received.getType() == MessageType.UPDATE) {
+                        System.out.println("Received message from server triggering update");
+                        client.notifyUpdate();
+                    }
                 } catch (SocketException e) {
                     System.out.println("Server has closed.");
                     socket.close();

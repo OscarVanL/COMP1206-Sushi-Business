@@ -1,55 +1,52 @@
 package common;
 
-import java.util.concurrent.ThreadLocalRandom;
+import exceptions.InvalidStockItemException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Oscar van Leusen
  */
 public class Staff extends Model implements Runnable {
-    public enum JobState {
-        COOKING, IDLE
+    public enum StaffState {
+        IDLE, COOKING
     }
 
+    boolean threadRunning = true;
     private String staffName;
-    private JobState jobState;
+    private StaffState jobState;
     private StockManager stockManager;
+    private ArrayList<Order> orders;
+    private String currentlyMaking = "";
 
-    public Staff(String staffName, StockManager stockManager) {
+    public Staff(String staffName, StockManager stockManager, ArrayList<Order> orders) {
         this.staffName = staffName;
         this.stockManager = stockManager;
-    }
-
-    @Override
-    public String toString() {
-        return staffName + ": " + getJobSummary();
-    }
-
-    @Override
-    public String getName() {
-        return super.name;
+        this.orders = orders;
     }
 
     @Override
     public void run() {
         Dish toRestock;
-        while(true) {
+        while(threadRunning) {
+            System.out.println(getName() + ": ");
             //Finds any dishes that need to be restocked (returns null if there are none)
             toRestock = stockManager.findDishToRestock();
             if (toRestock != null) {
-                jobState = JobState.COOKING;
-                //Waits between 20 and 60 seconds while the cook makes the dishes
-                int randomNum = ThreadLocalRandom.current().nextInt(20, 61);
-                try {
-                    Thread.sleep(1000*randomNum);
-                } catch (InterruptedException e) {
-                    System.out.println("Staff cooking meal interrupted");
-                }
+                jobState = StaffState.COOKING;
                 //Adds the restock amount to the stock for this dish.
+                currentlyMaking = toRestock.getName();
                 stockManager.restockDish(toRestock);
+                currentlyMaking = "";
+                jobState = StaffState.IDLE;
             }
 
+            checkOrderComplete();
+
             //Waits another 10 seconds before checking if any more dishes need to be cooked.
-            jobState = JobState.IDLE;
+            jobState = StaffState.IDLE;
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
@@ -58,17 +55,56 @@ public class Staff extends Model implements Runnable {
         }
     }
 
-    public JobState getJobState() {
+    private void checkOrderComplete() {
+        //Goes through orders, if there are enough of a stocked dish then its state is updated, otherwise it is cooked.
+        for (Order order : orders) {
+            try {
+                HashMap<Dish, Integer> orderContent = order.getBasket();
+                boolean orderReady = true;
+                //Looks at each dish in the order and if there are sufficient in stock.
+                for (Map.Entry<Dish, Integer> orderNumbers : orderContent.entrySet()) {
+                    if (stockManager.getStockLevel(orderNumbers.getKey()) < orderNumbers.getValue()) {
+                        orderReady = false;
+                    }
+                }
+
+                if (orderReady) {
+                    //Update the order status
+                    order.setOrderState(Order.OrderState.PREPARED);
+                    //Subtract the dish stock for the dishes we sold
+                    stockManager.orderComplete(orderContent);
+                }
+            } catch (InvalidStockItemException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return jobSummary();
+    }
+
+    @Override
+    public String getName() {
+        return this.staffName;
+    }
+
+    public StaffState getJobState() {
         return this.jobState;
     }
 
-    public String getJobSummary() {
-        if (this.jobState == JobState.COOKING) {
-            return "Cooking";
-        } else if (this.jobState == JobState.IDLE) {
+    public String jobSummary() {
+        if (this.jobState == StaffState.COOKING) {
+            return "Cooking: " + currentlyMaking;
+        } else if (this.jobState == StaffState.IDLE) {
             return "Idle";
         } else {
             return "";
         }
+    }
+
+    public void cancelThread() {
+        this.threadRunning = false;
     }
 }

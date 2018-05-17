@@ -3,6 +3,7 @@ import client.ClientWindow;
 import common.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,9 @@ public class ClientApplication implements ClientInterface {
     private ClientWindow clientWindow;
     private static CommsClient comms;
     private List<UpdateListener> listeners = new ArrayList<>();
+    private Map<Dish, Number> basket = new HashMap<>();
+    //Prices can't be changed on the server side once a Dish has been made, so it's safe to store these locally
+    //With no risk of the values becoming outdated.
 
     public static void main(String args[]) {
         ClientInterface clientInterface = initialise();
@@ -30,12 +34,12 @@ public class ClientApplication implements ClientInterface {
             }
         }).start();
 
-        System.out.println("back in main");
         try {
             sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         ClientWindow window = app.launchGUI(clientInterface);
     }
 
@@ -56,9 +60,11 @@ public class ClientApplication implements ClientInterface {
                     }
                 }
             }
+
             ClientWindow window = new ClientWindow(clientInterface);
             this.clientWindow = window;
             return window;
+
         }
     }
 
@@ -108,6 +114,11 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_POSTCODES));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.POSTCODES);
+            //A very janky fix, but this solved a major problem I was having where getPostcodes (the first server-client request)
+            //was returning null as receivedMessage. The client now launches reliably. It seems to only affect the first message.
+            while (receivedMessage == null) {
+                receivedMessage = comms.receiveMessage(MessageType.POSTCODES);
+            }
             return (ArrayList<Postcode>) receivedMessage.getPayload();
         }
         return null;
@@ -125,63 +136,94 @@ public class ClientApplication implements ClientInterface {
 
     @Override
     public String getDishDescription(Dish dish) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
+        return dish.getDishDescription();
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_DESC);
             return (String) receivedMessage.getPayload();
         }
-        return null;
+        return null;**/
     }
 
     @Override
     public Number getDishPrice(Dish dish) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
+        return dish.dishPrice();
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.DISH_PRICE);
-            return (long) receivedMessage.getPayload();
+            Double price = (Double) receivedMessage.getPayload();
+            prices.put(dish, price);
+            return price;
         }
-        return null;
+        return null;**/
     }
 
+    /**
+     * If our basket isn't initialised load it from the server. If it is, deal with the local basket
+     * @param user user to lookup
+     * @return : Map<Dish, Number> representing the user's Basket, if it is null then the user has nothing in Basket
+     */
     @Override
     public Map<Dish, Number> getBasket(User user) {
-        System.out.println(user.getName());
-        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET, user));
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.BASKET);
-            return (Map<Dish, Number>) receivedMessage.getPayload();
-        }
-        return null;
+            //If the received payload was null the user has nothing in their basket.
+            if (receivedMessage.getPayload() == null) {
+                this.basket = new HashMap<>();
+            } else {
+                this.basket = (Map<Dish, Number>) receivedMessage.getPayload();
+            }
+        }**/
+        return this.basket;
     }
 
     @Override
     public Number getBasketCost(User user) {
-        boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET_COST, user));
+        Double cost = 0.00;
+
+        for (Map.Entry<Dish, Number> basketDish : basket.entrySet()) {
+            Dish dish = basketDish.getKey();
+            Integer number = basketDish.getValue().intValue();
+            cost += dish.dishPrice() * number;
+        }
+
+        return cost;
+        /**boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET_COST, user));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.BASKET_COST);
-            return (long) receivedMessage.getPayload();
+            //If the received payload was null the user has nothing in their basket.
+            if (receivedMessage.getPayload() == null) {
+                return 0;
+            }
+            return (Double) receivedMessage.getPayload();
         }
-        return null;
+        return null;**/
     }
 
     @Override
     public void addDishToBasket(User user, Dish dish, Number quantity) {
-        ArrayList<Object> dishToAdd = new ArrayList<>();
+        /**ArrayList<Object> dishToAdd = new ArrayList<>();
         dishToAdd.add(user);
         dishToAdd.add(dish);
         dishToAdd.add(quantity);
-        comms.sendMessage(new Message(MessageType.ADD_DISH, dishToAdd));
-        notifyUpdate();
+        comms.sendMessage(new Message(MessageType.ADD_DISH, dishToAdd));**/
+        if (basket.keySet().contains(dish)) {
+            int oldQuantity = basket.get(dish).intValue();
+            basket.put(dish, quantity.intValue() + oldQuantity);
+        } else {
+            this.basket.put(dish, quantity);
+        }
     }
 
     @Override
     public void updateDishInBasket(User user, Dish dish, Number quantity) {
-        ArrayList<Object> dishToUpdate = new ArrayList<>();
+        /**ArrayList<Object> dishToUpdate = new ArrayList<>();
         dishToUpdate.add(user);
         dishToUpdate.add(dish);
         dishToUpdate.add(quantity);
-        comms.sendMessage(new Message(MessageType.UPDATE_DISH, dishToUpdate));
-        notifyUpdate();
+        comms.sendMessage(new Message(MessageType.UPDATE_DISH, dishToUpdate));**/
+        this.basket.put(dish, quantity);
     }
 
     @Override
@@ -201,7 +243,7 @@ public class ClientApplication implements ClientInterface {
 
     @Override
     public void clearBasket(User user) {
-        comms.sendMessage(new Message(MessageType.SEND_CANCEL));
+        this.basket.clear();
         notifyUpdate();
     }
 
@@ -244,7 +286,7 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_COST, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.COST);
-            return (long) receivedMessage.getPayload();
+            return (Double) receivedMessage.getPayload();
         }
         return null;
     }

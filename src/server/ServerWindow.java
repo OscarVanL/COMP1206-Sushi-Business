@@ -119,7 +119,7 @@ public class ServerWindow extends JFrame implements UpdateListener {
 		//Ingredients
 		ingredientPanel.addProperty("Name");
 		ingredientPanel.addProperty("Unit");
-		ingredientPanel.addProperty("common.Supplier",() -> server.getSuppliers());
+		ingredientPanel.addProperty("Supplier",() -> server.getSuppliers());
 		ingredientPanel.addProperty("RestockThreshold","Number");
 		ingredientPanel.addProperty("RestockAmount","Number");
 		ingredientPanel.addColumn("Stock",() -> server.getIngredientStockLevels());
@@ -207,7 +207,7 @@ public class ServerWindow extends JFrame implements UpdateListener {
 		ingredientPanel.add.addActionListener(e -> {
 				String name = (String) ingredientPanel.get("Name");
 				String unit = (String) ingredientPanel.get("Unit");
-				Supplier supplier = (Supplier) ingredientPanel.get("common.Supplier");
+				Supplier supplier = (Supplier) ingredientPanel.get("Supplier");
 				Number restockThreshold = (Number) ingredientPanel.get("RestockThreshold");
 				Number restockAmount = (Number) ingredientPanel.get("RestockAmount");
 				server.addIngredient(name, unit, supplier, restockThreshold, restockAmount);
@@ -1101,7 +1101,7 @@ public class ServerWindow extends JFrame implements UpdateListener {
 		}
 		
 		/**
-		 * common.Ingredient editor panel which provides the fields for editing the restocking levels and amounts
+		 * Ingredient editor panel which provides the fields for editing the restocking levels and amounts
 		 *
 		 */
 		public class IngredientEditor extends JPanel {

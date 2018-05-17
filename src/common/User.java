@@ -22,10 +22,6 @@ public class User extends Model implements Serializable {
         this.postcode = postcode;
     }
 
-    public String getUsername() {
-        return this.username;
-    }
-
     public boolean passwordMatches(String password) {
         if (this.password.equals(password)) {
             this.deleteSafe = false;

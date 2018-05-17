@@ -12,17 +12,17 @@ import static common.Order.OrderState.*;
  */
 public class Order extends Model implements Serializable {
     public enum OrderState {
-        BASKET, PREPARING, DELIVERING, COMPLETE, CANCELLED
+        BASKET, PREPARING, PREPARED, DELIVERING, COMPLETE, CANCELLED
     }
 
     //The price of the current order as an integer (Rather than float to avoid
-    private long orderPrice;
+    private Double orderPrice;
     private HashMap<Dish, Integer> basket = new HashMap<>();
     private User user;
     private OrderState state;
 
     public Order(User user) {
-        this.orderPrice = 0;
+        this.orderPrice = 0.00;
         this.user = user;
         this.name = user.getName() + "'s order.";
         this.state = BASKET;
@@ -104,7 +104,7 @@ public class Order extends Model implements Serializable {
      * Gets the total order price
      * @return long : Total order price for all the items ordered.
      */
-    public long getOrderPrice() {
+    public Double orderPrice() {
         return this.orderPrice;
     }
 
@@ -112,12 +112,12 @@ public class Order extends Model implements Serializable {
      * Calculates/recalculates the price of the basket, called after any modification of the basket.
      */
     public void calculatePrice() {
-        long oldPrice = this.orderPrice;
-        this.orderPrice = 0;
+        Double oldPrice = this.orderPrice;
+        this.orderPrice = 0.00;
         for (Map.Entry<Dish, Integer> basketEntry : basket.entrySet()) {
             Dish dish = basketEntry.getKey();
             Integer quantity = basketEntry.getValue();
-            this.orderPrice+=dish.getPrice()*quantity;
+            this.orderPrice+=dish.dishPrice()*quantity;
         }
         if (oldPrice != orderPrice) {
             notifyUpdate("price", oldPrice, this.orderPrice);
@@ -135,6 +135,13 @@ public class Order extends Model implements Serializable {
 
     public void cancelOrder() {
         this.state = OrderState.CANCELLED;
+    }
+
+    public synchronized void deliverOrder(int flyingSpeed) throws InterruptedException {
+        float sleepSeconds = ((float) user.getPostcode().getDistance() * 2) / flyingSpeed;
+        Thread.sleep((long) (1000*sleepSeconds));
+        this.state = OrderState.COMPLETE;
+        System.out.println("Delivered order in " + sleepSeconds + " seconds.");
     }
 
     /**

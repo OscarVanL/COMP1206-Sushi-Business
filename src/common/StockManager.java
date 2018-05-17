@@ -2,15 +2,17 @@ package common;
 
 import exceptions.*;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author Oscar van Leusen
  */
-public class StockManager {
+public class StockManager implements Serializable {
 
     //HashMap linking a dish (key) to stock (Integer).
     HashMap<Dish, StockItem> dishStock;
@@ -107,6 +109,20 @@ public class StockManager {
         }
     }
 
+
+    /**
+     * Called when the Staff have finished making an order, removes the number of each order from the stock.
+     * @param order
+     */
+    public void orderComplete(HashMap<Dish, Integer> order) {
+        for (Map.Entry<Dish, Integer> orderedItem : order.entrySet()) {
+
+            Dish dish = orderedItem.getKey();
+            Integer number = orderedItem.getValue();
+            dishStock.get(dish).removeStock(number);
+        }
+    }
+
     public long getRestockThreshold(Model model) throws InvalidStockItemException {
         if (model instanceof Dish) {
             return dishStock.get(model).getRestockThreshold();
@@ -178,26 +194,50 @@ public class StockManager {
         return stocks;
     }
 
+
     /**
      * Finds any dishes that are below stock levels and returns them
      * Synchronized so that it is thread safe, that is that multiple Staff won't get the same dish returned and both restock the same dish.
      * @return Dish : Dish to restock.
      */
     public synchronized Dish findDishToRestock() {
+        Dish toReturn = null;
         //Iterate through every dish we need to stock.
         for (Dish dish : dishStock.keySet()) {
             StockItem stock = dishStock.get(dish);
             //If there are items where the restock threshold exceeds the number of prepared dishes, we need to make more.
-            if (stock.getRestockThreshold() > stock.getStock()) {
+            if (stock.getRestockThreshold() >= stock.getStock() && canMakeMinQuantity(dish) && !stock.beingRestocked()) {
+                stock.setBeingRestocked(true);
                 //If there are sufficient ingredients to make the restock amount
-                if (canMakeMinQuantity(dish)) {
-                    //Return the dish (to the staff to be made).
-                    return dish;
-                }
+                //Return the dish (to the staff to be made).
+                toReturn = dish;
+                break;
             }
         }
         //If there are no dishes (with sufficient ingredient stock) to make, return null.
-        return null;
+        return toReturn;
+    }
+
+    /**
+     * Finds any ingredients that are below stock levels and returns them
+     * Synchronized so that it is thread safe, that is that multiple Drones won't get the same ingredient returned and both restock the same ingredient.
+     * @return Ingredient : Ingredient to restock.
+     */
+    public synchronized Ingredient findIngredientToRestock() {
+        Ingredient toReturn = null;
+        //Iterate through every Ingredient we need to keep stocked.
+        for (Ingredient ingredient : ingredientStock.keySet()) {
+            StockItem stock = ingredientStock.get(ingredient);
+
+            //If there are items where the restock threshold exceeds the number in stock, we need to get more.
+            if (stock.getRestockThreshold() >= stock.getStock() && !stock.beingRestocked()) {
+                stock.setBeingRestocked(true);
+                toReturn = ingredient;
+                break;
+            }
+        }
+        //If there are no ingredients to restock, return null.
+        return toReturn;
     }
 
     /**
@@ -225,13 +265,57 @@ public class StockManager {
      * @param dish : Dish to restock
      */
     public void restockDish(Dish dish) {
-        StockItem dishData = dishStock.get(dish);
-        //If the restock amount is 0, it will be restocked back purely to the threshold.
-        if (dishData.getRestockAmount() == 0) {
-            dishData.setStock(dishData.getRestockThreshold());
-        } else {
-            //Once the stock of an ingredient or dish falls below the restock threshold, then they are restocked up until the stock reaches the restock threshold + the restock amount.
-            dishData.setStock(dishData.getRestockThreshold() + dishData.getRestockAmount());
+        if (dish != null) {
+            StockItem dishData = dishStock.get(dish);
+
+            //Waits between 20 and 60 seconds while the cook makes the dishes
+            int randomNum = ThreadLocalRandom.current().nextInt(20, 61);
+            try {
+                Thread.sleep(1000*randomNum);
+            } catch (InterruptedException e) {
+                System.out.println("Staff cooking meal interrupted");
+            }
+
+
+
+            //If the restock amount is 0, it will be restocked back purely to the threshold.
+            if (dishData.getRestockAmount() == 0) {
+                dishData.setStock(dishData.getRestockThreshold());
+            } else {
+                //Once the stock of a dish falls below the restock threshold, they are restocked up to restock threshold + the restock amount.
+                dishData.setStock(dishData.getRestockThreshold() + dishData.getRestockAmount());
+            }
+
+            //Then deduct the ingredients required to make the dish
+            for (Ingredient ingredient : dish.getDishIngredients()) {
+                long amountUsed = dishData.getRestockAmount() * dish.getQuantity(ingredient);
+                ingredientStock.get(ingredient).removeStock(amountUsed);
+            }
+
+            dishStock.get(dish).setBeingRestocked(false);
+        }
+    }
+
+    public void restockIngredient(Ingredient ingredient, int flyingSpeed) {
+        if (ingredient != null) {
+            StockItem ingredientData = ingredientStock.get(ingredient);
+
+            //Waits the time required for the drone to go to the supplier and back (supplier distance * 2) / speed.
+            long sleepSeconds = (ingredient.getSupplier().getDistance() * 2) / flyingSpeed;
+            try {
+                Thread.sleep(1000*sleepSeconds);
+            } catch (InterruptedException e) {
+                System.out.println("Drone fetching ingredients interrupted");
+            }
+
+            //If the restock amount is 0, it will be restocked back purely to the threshold.
+            if (ingredientData.getRestockAmount() == 0) {
+                ingredientData.setStock(ingredientData.getRestockThreshold());
+            } else {
+                //Once the stock of an ingredient falls below the restock threshold, they are restocked up to restock threshold + restock amount.
+                ingredientData.setStock(ingredientData.getRestockThreshold() + ingredientData.getRestockAmount());
+            }
+            ingredientStock.get(ingredient).setBeingRestocked(false);
         }
     }
 }

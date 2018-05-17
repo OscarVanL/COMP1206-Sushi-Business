@@ -25,11 +25,14 @@ public class Server implements ServerInterface {
     }
 
     public void addUser(User user) {
+        System.out.println("user added");
         users.add(user);
+        server.notifyUpdate();
     }
 
     public void addOrder(Order order) {
         orders.add(order);
+        server.notifyUpdate();
     }
 
     public List<StockItem> getStock() {

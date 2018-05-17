@@ -1,27 +1,83 @@
 package common;
 
+import java.util.ArrayList;
+
+
 /**
  * @author Oscar van Leusen
  */
 public class Drone extends Model implements Runnable {
+    public enum DroneState {
+        IDLE, FETCHING, DELIVERING
+    }
 
-    private String currentJobSummary;
+    private String droneName;
+    private DroneState jobState;
+    private StockManager stockManager;
+    private ArrayList<Order> orders;
     private int flyingSpeed;
+    private String currentlyRestocking = "";
 
-    public Drone(Number flyingSpeed) {
+    public Drone(Number flyingSpeed, StockManager stockManager, ArrayList<Order> orders, int droneID) {
         notifyUpdate("instantiation", null, this);
-        this.setName("Drone");
+        this.droneName = "Drone " + droneID;
+        this.jobState = DroneState.IDLE;
+        this.stockManager = stockManager;
         this.flyingSpeed = (int) flyingSpeed;
+        this.orders = orders;
     }
 
     @Override
-    public String toString() {
-        return getName() + ": " + currentJobSummary;
+    public void run() {
+        Ingredient toRestock;
+        //Restocks ingredients and delivers orders.
+        while(true) {
+            //Finds any ingredients that need to be restocked (returns null if there are none).
+            toRestock = stockManager.findIngredientToRestock();
+
+            if (toRestock != null) {
+                jobState = DroneState.FETCHING;
+                notifyUpdate();
+                currentlyRestocking = toRestock.getName();
+                stockManager.restockIngredient(toRestock, flyingSpeed);
+                currentlyRestocking = "";
+                jobState = DroneState.IDLE;
+            }
+
+
+            //Finds any orders that need to be delivered
+            for (Order order : orders) {
+                if (order.getOrderState() == Order.OrderState.PREPARED) {
+                    System.out.println("found ");
+                    order.setOrderState(Order.OrderState.DELIVERING);
+                    notifyUpdate();
+                    try {
+                        order.deliverOrder(this.flyingSpeed);
+                        notifyUpdate();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                //Breaks after delivering order so that lots of ready orders don't prevent drones from collecting ingredients.
+                break;
+            }
+        }
     }
 
-    @Override
-    public String getName() {
-        return super.name;
+    public DroneState getJobState() {
+        return this.jobState;
+    }
+
+    public String jobSummary() {
+        if (this.jobState == DroneState.IDLE) {
+            return "Idle";
+        } else if (this.jobState == DroneState.FETCHING) {
+            return "Fetching ingredient: " + currentlyRestocking;
+        } else if (this.jobState == DroneState.DELIVERING) {
+            return "Delivering order";
+        } else {
+            return "";
+        }
     }
 
     public int getSpeed() {
@@ -29,11 +85,12 @@ public class Drone extends Model implements Runnable {
     }
 
     @Override
-    public void run() {
-        this.currentJobSummary="Idle";
-        Ingredient toRestock;
-        while(true) {
-            System.out.println("Drone restocking not yet implemented");
-        }
+    public String toString() {
+        return jobSummary();
+    }
+
+    @Override
+    public String getName() {
+        return this.droneName;
     }
 }

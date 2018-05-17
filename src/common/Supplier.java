@@ -7,31 +7,32 @@ import java.io.Serializable;
  */
 public class Supplier extends Model implements Serializable {
 
-    private Long distance;
+    String supplierName;
+    private Integer distance;
 
     public Supplier(String name, Number distance) {
         notifyUpdate("instantiation", null, this);
-        super.setName(name);
-        this.distance = Long.valueOf(distance.longValue());
+        this.supplierName = name;
+        this.distance = distance.intValue();
     }
 
     @Override
     public String toString() {
-        return super.toString();
+        return supplierName;
     }
 
     @Override
     public String getName() {
-        return name;
+        return supplierName;
     }
 
     @Override
     public void setName(String name) {
         notifyUpdate("name", this.name, name);
-        super.setName(name);
+        this.supplierName = name;
     }
 
-    public void setDistance(long distance) {
+    public void setDistance(Integer distance) {
         notifyUpdate("distance", this.distance, distance);
         this.distance = distance;
     }
@@ -40,7 +41,7 @@ public class Supplier extends Model implements Serializable {
      * Returns the distance of the Supplier from the Sushi restaurant
      * @return : Distance as a float
      */
-    public Long getDistance() {
+    public Integer getDistance() {
         return this.distance;
     }
 }

@@ -1,5 +1,7 @@
 package common;
 
+import exceptions.InvalidStockItemException;
+
 import java.io.Serializable;
 
 /**
@@ -9,12 +11,14 @@ public class Ingredient extends Model implements Serializable {
 
     private String measurementUnit;
     private Supplier supplier;
+    private StockManager stockManager;
 
-    public Ingredient(String name, String unit, Supplier supplier) {
+    public Ingredient(String name, String unit, Supplier supplier, StockManager stockManager) {
         notifyUpdate("instantiation",null, this);
         super.setName(name);
         this.measurementUnit = unit;
         this.supplier = supplier;
+        this.stockManager = stockManager;
     }
 
     @Override
@@ -52,6 +56,28 @@ public class Ingredient extends Model implements Serializable {
     public void setSupplier(Supplier newSupplier) {
         notifyUpdate("supplier", this.supplier, newSupplier);
         this.supplier = newSupplier;
+    }
+
+    public String getUnit() {
+        return this.measurementUnit;
+    }
+
+    public Long getRestockThreshold() {
+        try {
+            return stockManager.getRestockThreshold(this);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Long getRestockAmount() {
+        try {
+            return stockManager.getRestockAmount(this);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**

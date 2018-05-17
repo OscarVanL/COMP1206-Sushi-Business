@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,7 +87,6 @@ public class Configuration {
         for (String line : supplierLines) {
             //Structure: [0]SUPPLIER:[1]Name:[2]Distance
             String[] lineParse = line.split(":");
-            Supplier supplier = new Supplier(lineParse[1], Integer.parseInt(lineParse[2]));
             server.addSupplier(lineParse[1], Integer.parseInt(lineParse[2]));
         }
     }
@@ -98,12 +96,9 @@ public class Configuration {
      * @param ingredientLines : List containing non-parsed lines of Ingredient information.
      */
     private void loadIngredients(List<String> ingredientLines) throws InvalidSupplierException {
-        //HashMap linking an ingredient (key) to StockItem (value).
-        HashMap<Ingredient, StockItem> ingredientStock = new HashMap<>();
-
         //Adds all ingredients in the Configuration structure to our Suppliers array
         for (String line : ingredientLines) {
-            //Stucture: [0]INGREDIENT:[1]Name:[2]Unit:[3]Supplier:[4]Restock Threshold:[5]Restock Amount
+            //Structure: [0]INGREDIENT:[1]Name:[2]Unit:[3]Supplier:[4]Restock Threshold:[5]Restock Amount
             String[] lineParse = line.split(":");
             Supplier ingredientSupplier = null;
             //Finds supplier matching given name
@@ -115,13 +110,6 @@ public class Configuration {
             if (ingredientSupplier == null) {
                 throw new InvalidSupplierException("Non-valid supplier entered for ingredient when reading Configuration file");
             }
-            Ingredient ingredient = new Ingredient(lineParse[1], lineParse[2], ingredientSupplier);
-            StockItem stockStore = null;
-            try {
-                stockStore = new StockItem(ingredient, 0, Long.parseLong(lineParse[4]), Long.parseLong(lineParse[5]));
-            } catch (InvalidStockItemException e) {
-                e.printStackTrace();
-            }
             server.addIngredient(lineParse[1], lineParse[2], ingredientSupplier, Long.parseLong(lineParse[4]), Long.parseLong(lineParse[5]));
         }
     }
@@ -131,8 +119,6 @@ public class Configuration {
      * @param dishLines : List containing non-parsed lines of dish information.
      */
     private void loadDishes(List<String> dishLines) throws InvalidIngredientException {
-        //HashMap linking a dish (key) to StockItem (value).
-        HashMap<Dish, StockItem> dishStock = new HashMap<>();
 
         for (String line : dishLines) {
             //Structure: [0]DISH:[1]Name:[2]Description:[3]Price:[4]Restock Threshold:[5]Restock Amount:[6]Quantity * Item,Quantity * Item...
@@ -144,9 +130,9 @@ public class Configuration {
             String[] ingredientParse = lineParse[6].split(",");
 
             //Iterates through each ingredient in the dish to add it.
-            for (int i=0; i<ingredientParse.length; i++) {
+            for (String ingredientData : ingredientParse) {
                 //Parses Ingredients into structure: [0]Quantity,[1]Name
-                String[] currentIngredient = ingredientParse[i].split("\\s\\*\\s");
+                String[] currentIngredient = ingredientData.split("\\s\\*\\s");
                 //Looks for an existing ingredient matching the name of the ingredient to add
                 Ingredient dishIngredient = null;
                 for (Ingredient ingredient : server.getIngredients()) {
@@ -222,9 +208,9 @@ public class Configuration {
 
             //Parse each ordered dish (separated by a comma), Structure: [0]Quantity * Dish, [1]Quantity * Dish, ...
             String[] orderContents = lineParse[2].split(",");
-            for (int i=0; i<orderContents.length; i++) {
+            for (String orderContent : orderContents) {
                 //Structure: [0]Quantity, [1]Dish
-                String[] orderInfo = orderContents[i].split("\\s\\*\\s");
+                String[] orderInfo = orderContent.split("\\s\\*\\s");
                 Dish orderDish = null;
                 for (Dish dish : server.getDishes()) {
                     if (dish.getName().equals(orderInfo[1])) {
@@ -236,6 +222,7 @@ public class Configuration {
                 }
                 //Finally, adds the dish and quantity to the order.
                 order.addDish(orderDish, Integer.parseInt(orderInfo[0]));
+                order.setOrderState(Order.OrderState.PREPARING);
             }
             server.addOrder(order);
         }
@@ -270,11 +257,9 @@ public class Configuration {
             }
 
             //Then finds whatever StockItem this dish/ingredient is contained in
-            if (stockedItem != null) {
-                for (StockItem item : server.getStock()) {
-                    if (item.getStockedItem().equals(stockedItem)) {
-                        item.setStock(Long.parseLong(parseLine[2]));
-                    }
+            for (StockItem item : server.getStock()) {
+                if (item.getStockedItem().equals(stockedItem)) {
+                    item.setStock(Long.parseLong(parseLine[2]));
                 }
             }
         }
@@ -301,7 +286,12 @@ public class Configuration {
         for (String line : droneLines) {
             //Structure: [0]DRONE:[1]Speed
             String[] lineParse = line.split(":");
-            server.addDrone(Integer.parseInt(lineParse[1]));
+            int speed = Integer.parseInt(lineParse[1]);
+            if (speed > 0) {
+                server.addDrone(speed);
+            } else {
+                System.out.println("Attempted to add invalid drone with speed 0");
+            }
         }
     }
 

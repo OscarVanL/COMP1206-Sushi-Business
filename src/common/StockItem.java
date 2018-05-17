@@ -2,10 +2,12 @@ package common;
 
 import exceptions.InvalidStockItemException;
 
+import java.io.Serializable;
+
 /**
  * @author Oscar van Leusen
  */
-public class StockItem {
+public class StockItem implements Serializable {
 
     private boolean isDish;
     private boolean isIngredient;
@@ -14,6 +16,7 @@ public class StockItem {
     private long amountStocked;
     private long restockThreshold;
     private long restockAmount;
+    private boolean beingRestocked = false;
 
     /**
      * Creates a common.StockItem for a given Model (common.Dish or common.Ingredient), with the current stock and restocking Threshold.
@@ -48,9 +51,18 @@ public class StockItem {
         //If it's a dish, we only allow integer levels of stock
         if (isDish) {
             amountStocked += (int) stockToAdd;
-            addStock((int) stockToAdd);
+        } else {
+            //For ingredients we allow partial units.
+            amountStocked += stockToAdd;
         }
-        amountStocked += stockToAdd;
+    }
+
+    public void removeStock(long stockToRemove) {
+        if (isDish) {
+            amountStocked -= (int) stockToRemove;
+        } else {
+            amountStocked -= stockToRemove;
+        }
     }
 
     public void addRestockAmount() {
@@ -99,5 +111,13 @@ public class StockItem {
 
     public boolean isIngredient() {
         return isIngredient;
+    }
+
+    public void setBeingRestocked(boolean beingRestocked) {
+        this.beingRestocked = beingRestocked;
+    }
+
+    public boolean beingRestocked() {
+        return this.beingRestocked;
     }
 }

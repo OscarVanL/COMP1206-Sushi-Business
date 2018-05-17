@@ -1,5 +1,7 @@
 package common;
 
+import exceptions.InvalidStockItemException;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,13 +14,15 @@ public class Dish extends Model implements Serializable {
 
     private String dishName;
     private String dishDescription;
-    private long price;
+    private Double price;
+    private StockManager stockManager;
     private HashMap<Ingredient, Long> ingredientAmounts = new HashMap<>();
 
-    public Dish(String dishName, String dishDescription, Number price) {
+    public Dish(String dishName, String dishDescription, Number price, StockManager manager) {
         this.dishName = dishName;
         this.dishDescription = dishDescription;
-        this.price = price.longValue();
+        this.price = price.doubleValue();
+        this.stockManager = manager;
     }
 
     /**
@@ -56,7 +60,7 @@ public class Dish extends Model implements Serializable {
      * Gets the price of one of this dish
      * @return long : Price of one of this dish
      */
-    public long getPrice() {
+    public Double dishPrice() {
         return this.price;
     }
 
@@ -64,7 +68,7 @@ public class Dish extends Model implements Serializable {
      * Assigns the price of the Dish
      * @param price : Price of the dish as a float.
      */
-    public void setPrice(long price) {
+    public void setPrice(Double price) {
         notifyUpdate("price",this.price, price);
         this.price = price;
     }
@@ -74,7 +78,7 @@ public class Dish extends Model implements Serializable {
      * @param ingredient : Ingredient to check quantity for in dish
      * @return : Quantity of ingredient required
      */
-    public float getQuantity(Ingredient ingredient) {
+    public long getQuantity(Ingredient ingredient) {
         return ingredientAmounts.get(ingredient);
     }
 
@@ -112,6 +116,24 @@ public class Dish extends Model implements Serializable {
             recipe.put(dishIngredients.getKey(), dishIngredients.getValue());
         }
         return recipe;
+    }
+
+    public Long getRestockThreshold() {
+        try {
+            return stockManager.getRestockThreshold(this);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Long getRestockAmount() {
+        try {
+            return stockManager.getRestockAmount(this);
+        } catch (InvalidStockItemException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

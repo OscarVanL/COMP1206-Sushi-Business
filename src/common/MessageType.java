@@ -17,10 +17,10 @@ public enum MessageType implements Serializable {
     GET_ORDERS, ORDERS,
     GET_STATUS, STATUS,
     GET_COST, COST,
-    //Messages sent from Client to sever
     ADD_DISH,
     UPDATE_DISH,
     SEND_CHECKOUT, ORDER,
     SEND_CLEAR,
     SEND_CANCEL,
+    UPDATE
 }

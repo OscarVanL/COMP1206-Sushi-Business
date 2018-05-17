@@ -6,6 +6,7 @@ import server.ServerWindow;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,8 @@ public class ServerApplication extends Thread implements ServerInterface {
     private ArrayList<Postcode> postcodes = new ArrayList<>();
     private ArrayList<User> users = new ArrayList<>();
     private ArrayList<Order> orders = new ArrayList<>();
-    private ArrayList<Staff> staff = new ArrayList<>();
-    private ArrayList<Drone> drones = new ArrayList<>();
+    private HashMap<Staff, Thread> staff = new HashMap<>();
+    private HashMap<Drone, Thread> drones = new HashMap<>();
 
     public static boolean ingredientsRestocked = true;
     public static boolean dishesRestocked = true;
@@ -36,13 +37,8 @@ public class ServerApplication extends Thread implements ServerInterface {
     public static void main(String args[]) {
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
-        app.serverWindow = app.launchGUI(serverInterface);
 
-        try {
-            app.loadConfiguration("ConfigurationExample.txt");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        app.serverWindow = app.launchGUI(serverInterface);
 
         Thread commsThread;
         try {
@@ -74,6 +70,11 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     private static ServerInterface initialise() {
         ServerApplication app = new ServerApplication();
+        try {
+            app.loadConfiguration("ConfigurationExample.txt");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         return app;
     }
 
@@ -84,12 +85,17 @@ public class ServerApplication extends Thread implements ServerInterface {
     }
 
     /**
+     * Loads a configuration file, either with no initialised data or with already initialised data.
      * Tutorial for Java 8 file reading used: https://www.mkyong.com/java8/java-8-stream-read-a-file-line-by-line/
      * @param filename configuration file to load
      * @throws FileNotFoundException Exception thrown if the file is not found.
      */
     @Override
     public void loadConfiguration(String filename) throws FileNotFoundException {
+        //Remove ANY stored data before loading.
+        for (Thread thread : staff.values()) {
+            thread.interrupt();
+        }
         try {
             Server server = new Server(this, stockManager, users, orders);
             config = new Configuration(server, filename);
@@ -138,7 +144,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
-        Dish newDish = new Dish(name, description, price);
+        Dish newDish = new Dish(name, description, price, stockManager);
         try {
             StockItem newDishStock = new StockItem(newDish, 0, restockThreshold, restockAmount);
             stockManager.addDish(newDish, newDishStock);
@@ -147,6 +153,8 @@ public class ServerApplication extends Thread implements ServerInterface {
             e.printStackTrace();
         }
         notifyUpdate();
+        notifyClient();
+
         return newDish;
     }
 
@@ -162,6 +170,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         dishes.remove(dish);
         stockManager.removeDish(dish);
         notifyUpdate();
+        notifyClient();
     }
 
     @Override
@@ -230,7 +239,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public Ingredient addIngredient(String name, String unit, Supplier supplier, Number restockThreshold, Number restockAmount) {
-        Ingredient newIngredient  = new Ingredient(name, unit, supplier);
+        Ingredient newIngredient  = new Ingredient(name, unit, supplier, stockManager);
         StockItem newIngredientStock = null;
         try {
             newIngredientStock = new StockItem(newIngredient, 0, restockThreshold, restockAmount);
@@ -330,13 +339,16 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public List<Drone> getDrones() {
-        return drones;
+        List<Drone> droneList = new ArrayList<>(drones.keySet());
+        return droneList;
     }
 
     @Override
     public Drone addDrone(Number speed) {
-        Drone newDrone = new Drone(speed);
-        drones.add(newDrone);
+        Drone newDrone = new Drone(speed, stockManager, orders, drones.size() + 1);
+        Thread droneThread = new Thread(newDrone);
+        droneThread.start();
+        drones.put(newDrone, droneThread);
         notifyUpdate();
         return newDrone;
     }
@@ -359,20 +371,23 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public List<Staff> getStaff() {
-        return staff;
+        List<Staff> staffList = new ArrayList<>(staff.keySet());
+        return staffList;
     }
 
     @Override
     public Staff addStaff(String name) {
-        Staff newStaff = new Staff(name, stockManager);
-        staff.add(newStaff);
+        Staff newStaff = new Staff(name, stockManager, orders);
+        Thread staffThread = new Thread(newStaff);
+        staffThread.start();
+        staff.put(newStaff, staffThread);
         notifyUpdate();
         return newStaff;
     }
 
     @Override
     public void removeStaff(Staff staff) throws UnableToDeleteException {
-        if (staff.getJobState() == Staff.JobState.IDLE) {
+        if (staff.getJobState() == Staff.StaffState.IDLE) {
             this.staff.remove(staff);
             notifyUpdate();
         } else {
@@ -393,7 +408,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public void removeOrder(Order order) throws UnableToDeleteException {
-        if (order.getOrderState() == Order.OrderState.CANCELLED) {
+        if (order.getOrderState() == Order.OrderState.CANCELLED || order.getOrderState() == Order.OrderState.COMPLETE) {
             orders.remove(order);
             notifyUpdate();
         } else {
@@ -409,11 +424,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public boolean isOrderComplete(Order order) {
-        if (order.getOrderState() == Order.OrderState.COMPLETE) {
-            return true;
-        } else {
-            return false;
-        }
+        return order.getOrderState() == Order.OrderState.COMPLETE;
     }
 
     @Override
@@ -423,6 +434,8 @@ public class ServerApplication extends Thread implements ServerInterface {
             return "In Basket";
         } else if (state == Order.OrderState.PREPARING) {
             return "Preparing";
+        } else if (state == Order.OrderState.PREPARED) {
+            return "Prepared";
         } else if (state == Order.OrderState.DELIVERING) {
             return "Delivering";
         } else if (state == Order.OrderState.COMPLETE){
@@ -436,7 +449,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     @Override
     public Number getOrderCost(Order order) {
-        return order.getOrderPrice();
+        return order.orderPrice();
     }
 
     @Override
@@ -454,14 +467,13 @@ public class ServerApplication extends Thread implements ServerInterface {
     public void removePostcode(Postcode postcode) throws UnableToDeleteException {
         if (postcode.isDeleteSafe()) {
             postcodes.remove(postcode);
-        } else {
-            throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
-        }
+        } else throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
         notifyUpdate();
     }
 
     @Override
     public List<User> getUsers() {
+
         return this.users;
     }
 
@@ -547,7 +559,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
         boolean userExists = false;
         for (User user : users) {
-            if (user.getUsername().equals(newUser.getUsername())) {
+            if (user.getName().equals(newUser.getName())) {
                 userExists = true;
             }
         }
@@ -578,7 +590,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         User loggedIn = null;
         for (User user : users) {
             //If there's a user where both username and password match those entered, it was a correct login!
-            if (user.getUsername().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
+            if (user.getName().equals(loginDetails.get(0)) && user.passwordMatches(loginDetails.get(1))) {
                 loggedIn = user;
                 loginCorrect = true;
             }
@@ -598,7 +610,14 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     private void processGetPostcodes(Message message) {
         int uid = message.getConnectionUID();
-        Message reply = new Message(MessageType.POSTCODES, (ArrayList<Postcode>) this.getPostcodes());
+        Message reply;
+        if (this.getPostcodes() == null) {
+            System.out.println("Postcodes not yet initialised...");
+            reply = new Message(MessageType.POSTCODES, new ArrayList<Postcode>());
+        } else {
+            reply = new Message(MessageType.POSTCODES, (ArrayList<Postcode>) this.getPostcodes());
+        }
+
         communication.sendMessage(uid, reply);
     }
 
@@ -657,7 +676,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
         Message reply;
         if (serverDish != null) {
-            reply = new Message(MessageType.DISH_PRICE, serverDish.getPrice());
+            reply = new Message(MessageType.DISH_PRICE, serverDish.dishPrice());
         } else {
             reply = new Message(MessageType.DISH_PRICE, null);
         }
@@ -671,22 +690,26 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     public void processGetBasket(Message message) {
         int uid = message.getConnectionUID();
+
+        Message reply = new Message(MessageType.BASKET, null);
+
+        //If no User was passed with message, return an empty basket.
         User clientUser = (User) message.getPayload();
         User serverUser = null;
 
         for (User user: users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
             }
         }
 
-        Message reply = new Message(MessageType.BASKET, null);
         for (Order order : orders) {
             //If any Order object that is still in basket and for the requested user, this is the correct Order.
-            if (order.getUser().equals(serverUser)) {
+            if (order.getUser().equals(serverUser) && order.getOrderState() == Order.OrderState.BASKET) {
                 reply = new Message(MessageType.BASKET, order.getBasket());
             }
         }
+
         communication.sendMessage(uid, reply);
     }
 
@@ -700,15 +723,15 @@ public class ServerApplication extends Thread implements ServerInterface {
         User serverUser = null;
 
         for (User user: users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
             }
         }
 
         Message reply = new Message(MessageType.BASKET_COST, null);
         for (Order order : orders) {
-            if (order.getUser().equals(serverUser)) {
-                reply = new Message(MessageType.BASKET_COST, order.getOrderPrice());
+            if (order.getUser().equals(serverUser) && order.getOrderState() == Order.OrderState.BASKET) {
+                reply = new Message(MessageType.BASKET_COST, order.orderPrice());
             }
         }
         communication.sendMessage(uid, reply);
@@ -730,7 +753,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             ArrayList<Order> userOrders = new ArrayList<>();
 
             for (Order order : orders) {
-                if (order.getUser().getUsername().equals(clientUser.getUsername())) {
+                if (order.getUser().getName().equals(clientUser.getName())) {
                     userOrders.add(order);
                 }
             }
@@ -775,7 +798,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             }
         }
 
-        Message reply = new Message(MessageType.COST, serverOrder.getOrderPrice());
+        Message reply = new Message(MessageType.COST, serverOrder.orderPrice());
         communication.sendMessage(uid, reply);
     }
 
@@ -795,7 +818,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         Dish serverDish = null;
 
         for (User user : users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
                 break;
             }
@@ -835,7 +858,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         Dish serverDish = null;
 
         for (User user : users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
                 break;
             }
@@ -868,7 +891,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         User serverUser = null;
 
         for (User user : users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
             }
         }
@@ -893,7 +916,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         User serverUser = null;
 
         for (User user : users) {
-            if (user.getUsername().equals(clientUser.getUsername())) {
+            if (user.getName().equals(clientUser.getName())) {
                 serverUser = user;
             }
         }
@@ -932,6 +955,12 @@ public class ServerApplication extends Thread implements ServerInterface {
     public void notifyUpdate() {
         for (UpdateListener listener : listeners) {
             listener.updated(new UpdateEvent());
+        }
+    }
+
+    public void notifyClient() {
+        if (communication != null) {
+            communication.sendMessage(new Message(MessageType.UPDATE));
         }
     }
 }
