@@ -243,9 +243,9 @@ public class ClientApplication implements ClientInterface {
         order.addDishes(basket);
 
         boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, order));
+        this.clearBasket(user);
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
-            this.clearBasket(user);
             if (receivedMessage == null) {
                 return null;
             } else {
@@ -271,7 +271,7 @@ public class ClientApplication implements ClientInterface {
             }
             return (List<Order>) receivedMessage.getPayload();
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

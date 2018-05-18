@@ -114,6 +114,7 @@ public class CommsClient extends Thread implements Comms {
             if (message instanceof Message) {
                 try {
                     out.writeObject(message);
+                    out.flush();
                     return true;
                 } catch (IOException e) {
                     e.printStackTrace();

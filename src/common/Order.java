@@ -44,6 +44,8 @@ public class Order extends Model implements Serializable {
 
     public void addDishes(HashMap<Dish, Number> order) {
         basket.putAll(order);
+        calculatePrice();
+        notifyUpdate();
     }
 
     public void updateDishQuantity(Dish dish, int newQuantity) {

@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.stream.Stream;
 
 /**
  * Tutorial used for implementation of Thread-based socket communication (although many aspects are changed from this):
@@ -18,8 +19,8 @@ public class CommsClientHandler extends Thread {
     private volatile boolean running;
     private CommsServer commsServer;
     private final Socket socket;
-    private final ObjectInputStream in;
-    private final ObjectOutputStream out;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
     private int clientUID;
     private Queue<Message> messages = new LinkedList<>();
     private boolean firstPayload = true;
@@ -46,7 +47,6 @@ public class CommsClientHandler extends Thread {
                     clientUID = (int) receivedPayload;
                     System.out.println("received client UID: " + clientUID);
 
-                    out.flush();
                     firstPayload = false;
 
                 } else {
@@ -96,6 +96,7 @@ public class CommsClientHandler extends Thread {
         }
         try {
             out.writeObject(message);
+            out.flush();
             return true;
         } catch (IOException e) {
             e.printStackTrace();

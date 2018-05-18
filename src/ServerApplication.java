@@ -21,7 +21,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     private static Thread commsThread = null;
     private ServerWindow serverWindow;
     private Configuration config;
-    private Thread backup;
+    private DataPersistence backup;
     private static CommsServer communication;
 
     private StockManager stockManager = new StockManager();
@@ -120,9 +120,10 @@ public class ServerApplication extends Thread implements ServerInterface {
         drones.clear();
         ingredientsRestocked = true;
         dishesRestocked = true;
-
+        dishesRestocked = true;
         if (communication != null) {
             communication.dropConnections();
+        } else {
             startComms(this);
         }
 
@@ -131,7 +132,8 @@ public class ServerApplication extends Thread implements ServerInterface {
             config = new Configuration(server, filename);
             config.loadConfiguration();
             backup = new DataPersistence(server, stockManager);
-            backup.start();
+            Thread backupThread = new Thread(backup);
+            backupThread.start();
             notifyUpdate();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
             e.printStackTrace();
@@ -944,8 +946,9 @@ public class ServerApplication extends Thread implements ServerInterface {
         order.clear();
         order.setBasket(serverOrderData);
 
-        orders.add(order);
         order.setOrderState(Order.OrderState.PREPARING);
+        orders.add(order);
+
 
         Message reply = new Message(MessageType.ORDER, order);
         communication.sendMessage(uid, reply);
