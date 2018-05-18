@@ -57,9 +57,9 @@ public class CommsClientHandler extends Thread {
                         System.out.println("received message");
                     } catch (SocketException e) {
                         System.out.println("Client has disconnected.");
-                        socket.close();
-                        in.close();
                         out.close();
+                        in.close();
+                        socket.close();
                         running = false;
                         Thread.currentThread().interrupt();
                         return;
@@ -90,7 +90,7 @@ public class CommsClientHandler extends Thread {
         return this.clientUID;
     }
 
-    public boolean sendMessage(Serializable message) throws InvalidMessageException {
+    public boolean sendMessage(Message message) throws InvalidMessageException {
         if (message == null) {
             throw new InvalidMessageException("Attempted to send message to client with null content");
         }

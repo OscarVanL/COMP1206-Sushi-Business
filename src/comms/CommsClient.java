@@ -71,9 +71,9 @@ public class CommsClient extends Thread implements Comms {
                     received = (Message) in.readObject();
                 } catch (SocketException | EOFException e) {
                     System.out.println("Server has closed.");
-                    socket.close();
-                    in.close();
                     out.close();
+                    in.close();
+                    socket.close();
                     running = false;
                     firstMessage = true;
                     //Crash the client since it has no server connection
@@ -109,31 +109,29 @@ public class CommsClient extends Thread implements Comms {
 
 
     @Override
-    public boolean sendMessage(Serializable message) {
+    public synchronized boolean sendMessage(Message message) {
         if (initialised()) {
-            if (message instanceof Message) {
-                try {
-                    out.writeObject(message);
-                    out.flush();
-                    return true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                System.out.println("Sent invalid message type that wasn't of type 'Message'");
-                try {
-                    throw new InvalidMessageException("Sent invalid message type that wasn't of type 'Message'");
-                } catch (InvalidMessageException e) {
-                    e.printStackTrace();
-                }
+            try {
+                out.writeObject(message);
+                out.flush();
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
+        } else {
+            System.out.println("Sent invalid message type that wasn't of type 'Message'");
+            try {
+                throw new InvalidMessageException("Sent invalid message type that wasn't of type 'Message'");
+            } catch (InvalidMessageException e) {
+                e.printStackTrace();
+            }
         }
+
         return false;
     }
 
     @Override
-    public boolean sendMessage(int uid, Serializable message) {
+    public synchronized boolean sendMessage(int uid, Message message) {
         //We just call sendMessage and ignore the uid, since only one instance of the server exists, so uid is redundant.
         return sendMessage(message);
     }
@@ -143,7 +141,7 @@ public class CommsClient extends Thread implements Comms {
      * @return : Serializable payload (must be cast to retrieve object)
      */
     @Override
-    public Message receiveMessage() {
+    public synchronized Message receiveMessage() {
         //Tries to receive the message a few times because of timing differences. Bit of a hacky solution but oh well.
         do {
             for (int i=0; i<5; i++) {
@@ -173,7 +171,7 @@ public class CommsClient extends Thread implements Comms {
      * @return : Message received
      */
     @Override
-    public Message receiveMessage(MessageType type) {
+    public synchronized Message receiveMessage(MessageType type) {
         do {
             for (int i=0; i<5; i++) {
                 synchronized (messages) {

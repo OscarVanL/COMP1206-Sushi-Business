@@ -9,15 +9,15 @@ public interface Comms {
 
     //A message to be sent to all clients
     //Elipse adds varargs (arbitrary number of arguments)
-    boolean sendMessage(Serializable payload);
+    boolean sendMessage(Message message);
 
     /**
      * Payload(s) to be sent to a client of specific uid
      * @param uid : Unique ID to send message to
-     * @param payload : Object to be sent
+     * @param message : Object to be sent
      * @return boolean : Message sent without exceptions/errors.
      */
-    boolean sendMessage(int uid, Serializable payload);
+    boolean sendMessage(int uid, Message message);
 
     Message receiveMessage();
 

@@ -63,7 +63,7 @@ public class CommsServer extends Thread implements Comms {
      * @return boolean : Error sent without exceptions/errors
      */
     @Override
-    public boolean sendMessage(Serializable message) {
+    public synchronized boolean sendMessage(Message message) {
         boolean success = true;
         for (Thread thread : clientConnection.keySet()) {
             CommsClientHandler client = (CommsClientHandler) thread;
@@ -87,7 +87,7 @@ public class CommsServer extends Thread implements Comms {
      * @return boolean: Error sent without exceptions/errors.
      */
     @Override
-    public boolean sendMessage(int uid, Serializable message) {
+    public synchronized boolean sendMessage(int uid, Message message) {
         for (Thread thread : clientConnection.keySet()) {
             CommsClientHandler client = (CommsClientHandler) thread;
             if (client.getUID() == uid) {

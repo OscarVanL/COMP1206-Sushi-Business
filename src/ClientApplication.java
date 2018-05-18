@@ -34,7 +34,7 @@ public class ClientApplication implements ClientInterface {
         new Thread(() -> {
             synchronized (app) {
                 System.out.println("launching comms");
-                CommsClient clientComms = new CommsClient(app, 7734);
+                CommsClient clientComms = new CommsClient(app, 5000);
                 comms = clientComms;
             }
         }).start();
@@ -139,7 +139,7 @@ public class ClientApplication implements ClientInterface {
             while (receivedMessage == null) {
                 receivedMessage = comms.receiveMessage(MessageType.DISHES);
             }
-            return (ArrayList<Dish>) receivedMessage.getPayload();
+            return (List<Dish>) receivedMessage.getPayload();
         }
         return null;
     }
@@ -243,12 +243,12 @@ public class ClientApplication implements ClientInterface {
         order.addDishes(basket);
 
         boolean success = comms.sendMessage(new Message(MessageType.SEND_CHECKOUT, order));
-        this.clearBasket(user);
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.ORDER);
             if (receivedMessage == null) {
                 return null;
             } else {
+                this.clearBasket(user);
                 return (Order) receivedMessage.getPayload();
             }
         }

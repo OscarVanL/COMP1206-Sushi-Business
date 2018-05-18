@@ -81,7 +81,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     private static void startComms(ServerApplication app) {
         try {
-            commsThread = new CommsServer(7734);
+            commsThread = new CommsServer(5000);
             communication = (CommsServer) commsThread;
             commsThread.start();
             running = true;
@@ -181,6 +181,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     @Override
     public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
         Dish newDish = new Dish(name, description, price, stockManager);
+        System.out.println("New dish added: " + name);
         try {
             StockItem newDishStock = new StockItem(newDish, 0, restockThreshold, restockAmount);
             stockManager.addDish(newDish, newDishStock);
@@ -189,7 +190,6 @@ public class ServerApplication extends Thread implements ServerInterface {
             e.printStackTrace();
         }
         notifyUpdate();
-        notifyClient();
 
         return newDish;
     }
@@ -225,6 +225,8 @@ public class ServerApplication extends Thread implements ServerInterface {
     public void setRecipe(Dish dish, Map<Ingredient, Number> recipe) {
         dish.setRecipe(recipe);
         notifyUpdate();
+        //After tracing ServerWindow code, it is at this point the Dish details are finalised
+        notifyClient();
     }
 
     @Override
@@ -811,10 +813,10 @@ public class ServerApplication extends Thread implements ServerInterface {
         int uid = message.getConnectionUID();
         Order clientOrder = (Order) message.getPayload();
 
-        Message reply = new Message(MessageType.STATUS, Order.OrderState.BASKET);
+        Message reply = new Message(MessageType.STATUS, "In Basket");
 
         for (Order order : orders) {
-            if (order.getUser().getName().equals(clientOrder.getUser().getName())) {
+            if (order.getUser().getName().equals(clientOrder.getUser().getName()) && order.getUserOrderNum() == clientOrder.getUserOrderNum()) {
                 reply = new Message(MessageType.STATUS, getOrderStatus(order));
             }
         }
