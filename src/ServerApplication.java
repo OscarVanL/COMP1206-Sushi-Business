@@ -42,27 +42,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     public static void main(String args[]) {
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
-
         app.serverWindow = app.launchGUI(serverInterface);
-        //startComms(app);
-    }
-
-    public static void startComms(ServerApplication app) {
-        if (commsThread == null) {
-            initialiseComms();
-            app.start();
-        }
-    }
-
-    private static void initialiseComms() {
-        try {
-            commsThread = new CommsServer(7734);
-            communication = (CommsServer) commsThread;
-            commsThread.start();
-            running = true;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private static boolean running = true;
@@ -99,6 +79,18 @@ public class ServerApplication extends Thread implements ServerInterface {
         return window;
     }
 
+    private static void startComms(ServerApplication app) {
+        try {
+            commsThread = new CommsServer(7734);
+            communication = (CommsServer) commsThread;
+            commsThread.start();
+            running = true;
+            app.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Loads a configuration file, either with no initialised data or with already initialised data.
      * Tutorial for Java 8 file reading used: https://www.mkyong.com/java8/java-8-stream-read-a-file-line-by-line/
@@ -129,16 +121,20 @@ public class ServerApplication extends Thread implements ServerInterface {
         ingredientsRestocked = true;
         dishesRestocked = true;
 
-        if (communication != null) communication.dropConnections();
-        startComms(this);
+        if (communication != null) {
+            communication.dropConnections();
+            startComms(this);
+        }
 
         try {
             Server server = new Server(this, stockManager, users, orders);
             config = new Configuration(server, filename);
             config.loadConfiguration();
-            backup = new DataPersistence(server, stockManager, users, orders);
+            backup = new DataPersistence(server, stockManager);
             notifyUpdate();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

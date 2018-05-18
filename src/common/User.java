@@ -80,6 +80,10 @@ public class User extends Model implements Serializable {
         return this.username;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
     public void incrementOrdersMade() {
         ordersMade++;
     }
