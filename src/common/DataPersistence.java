@@ -13,18 +13,18 @@ import java.util.Map;
  * @author Oscar van Leusen
  */
 public class DataPersistence extends Thread {
-    File folder = new File(System.getProperty("user.dir"));
-    FileWriter writer;
-    Server server;
-    StockManager stockManager;
-    List<Supplier> suppliers;
-    List<Ingredient> ingredients;
-    List<Dish> dishes;
-    List<Postcode> postcodes;
-    List<User> users;
-    List<Order> orders;
-    List<Staff> staff;
-    List<Drone> drones;
+    private File folder = new File(System.getProperty("user.dir"));
+    private volatile boolean backupsRunning = true;
+    private Server server;
+    private StockManager stockManager;
+    private List<Supplier> suppliers;
+    private List<Ingredient> ingredients;
+    private List<Dish> dishes;
+    private List<Postcode> postcodes;
+    private List<User> users;
+    private List<Order> orders;
+    private List<Staff> staff;
+    private List<Drone> drones;
 
     public DataPersistence(Server server, StockManager stockManager) {
         this.server = server;
@@ -36,11 +36,9 @@ public class DataPersistence extends Thread {
      */
     @Override
     public void run() {
-        while (true) {
+        while (backupsRunning) {
             //Ensures there are only 5 backups at a time. If there are more than 5 then existing backups are removed.
-            if (countBackups() > 5) {
-                removeExcessBackup();
-            }
+            if (countBackups() > 5) removeExcessBackup();
             //Makes a backup every 60 seconds.
             try {
                 sleep(60000);
@@ -61,14 +59,16 @@ public class DataPersistence extends Thread {
             System.out.println("Backing up to: " + filePath);
 
             try {
-                writer = new FileWriter(new File(filePath));
+                FileWriter writer = new FileWriter(new File(filePath));
                 for (String line : restaurantState) {
                     writer.write(line);
                     writer.flush();
                 }
                 writer.close();
             } catch (IOException e) {
+                this.backupsRunning = false;
                 e.printStackTrace();
+                System.out.println("IOException thrown when writing backup. Disabling backup creation");
             }
 
         }
@@ -81,12 +81,14 @@ public class DataPersistence extends Thread {
     private int countBackups() {
         File[] filesInFolder = folder.listFiles();
         int numBackups = 0;
-        for (int i=0; i<filesInFolder.length; i++) {
-            if (filesInFolder[i].isFile() && filesInFolder[i].getName().contains("Sushi-Backup")) {
-                numBackups++;
-            }
+        if (filesInFolder != null) {
+            for (File aFilesInFolder : filesInFolder)
+                if (aFilesInFolder.isFile() && aFilesInFolder.getName().contains("Sushi-Backup")) {
+                    numBackups++;
+                }
+            System.out.println("Number of existing backups: " + numBackups);
         }
-        System.out.println("Number of existing backups: " + numBackups);
+
         return numBackups;
     }
 
@@ -94,19 +96,27 @@ public class DataPersistence extends Thread {
      * Used to find and remove the oldest backup if there is an excess of backups.
      */
     private void removeExcessBackup() {
+        File[] filesInFolder = folder.listFiles();
         File oldest = null;
 
         long lastModified = Long.MAX_VALUE;
-        for (File backup : folder.listFiles()) {
-            if (backup.getName().startsWith("Sushi-Backup")) {
-                if (backup.lastModified() < lastModified) {
-                    oldest = backup;
-                    lastModified = backup.lastModified();
+        if (filesInFolder != null) {
+            for (File backup : filesInFolder) {
+                if (backup.getName().startsWith("Sushi-Backup")) {
+                    if (backup.lastModified() < lastModified) {
+                        oldest = backup;
+                        lastModified = backup.lastModified();
+                    }
                 }
             }
         }
-        System.out.println("Deleting old backup: " + oldest.getName());
-        oldest.delete();
+
+        if (oldest != null) {
+            boolean deleted = oldest.delete();
+            if (deleted) {
+                System.out.println("Deleted old backup: " + oldest.getName());
+            }
+        }
     }
 
     /**
@@ -197,7 +207,7 @@ public class DataPersistence extends Thread {
             for (Map.Entry<Ingredient, Number> dishIngredient : recipe.entrySet()) {
                 Ingredient ingredient = dishIngredient.getKey();
                 Long quantity = dishIngredient.getValue().longValue();
-                sb.append(quantity + " * " + ingredient.getName()+",");
+                sb.append(quantity).append(" * ").append(ingredient.getName()).append(",");
             }
             //Removes the last extra comma separating ingredients (as there is no following ingredient)
             sb.setLength(sb.length() - 1);
@@ -299,7 +309,7 @@ public class DataPersistence extends Thread {
             for (Map.Entry<Dish, Number> dishQuantity : orderQuantities.entrySet()) {
                 Dish dish = dishQuantity.getKey();
                 Integer amount = dishQuantity.getValue().intValue();
-                sb.append(amount + " * " + dish.getName() + ",");
+                sb.append(amount).append(" * ").append(dish.getName()).append(",");
             }
             //Used to remove the excess comma at the end of the list of dishes and quantities.
             sb.setLength(sb.length() - 1);
@@ -326,6 +336,28 @@ public class DataPersistence extends Thread {
             stockOutput.add(sb.toString());
         }
         return stockOutput;
+    }
+
+    /**
+     * Disables server backups from taking place
+     */
+    private void disableBackups() {
+        this.backupsRunning = false;
+    }
+
+    /**
+     * Re-renables server backups
+     */
+    private void enableBackups() {
+        this.backupsRunning = true;
+    }
+
+    /**
+     * Returns whether server backups are taking place
+     * @return True if backups running, False if not.
+     */
+    private boolean backupsRunning() {
+        return this.backupsRunning;
     }
 
 

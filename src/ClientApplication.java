@@ -27,7 +27,7 @@ public class ClientApplication implements ClientInterface {
     /**
      * Starts the Client Application
      * Note: Must be started after the Server application.
-     * @param args
+     * @param args Launch arguments (not used)
      */
     public static void main(String args[]) {
         ClientInterface clientInterface = initialise();
@@ -36,8 +36,7 @@ public class ClientApplication implements ClientInterface {
         new Thread(() -> {
             synchronized (app) {
                 System.out.println("launching comms");
-                CommsClient clientComms = new CommsClient(app, 5000);
-                comms = clientComms;
+                comms = new CommsClient(app, 5000);
             }
         }).start();
 
@@ -56,8 +55,7 @@ public class ClientApplication implements ClientInterface {
      * @return : ClientInterface instance
      */
     private static ClientInterface initialise() {
-        ClientApplication app = new ClientApplication();
-        return app;
+        return new ClientApplication();
     }
 
     /**
@@ -65,7 +63,7 @@ public class ClientApplication implements ClientInterface {
      * @param clientInterface : Previously initialised ClientInterface
      * @return ClientWIndow instance.
      */
-    ClientWindow launchGUI(ClientInterface clientInterface) {
+    private ClientWindow launchGUI(ClientInterface clientInterface) {
         System.out.println("entered launchGUI");
         synchronized (this) {
             if (comms != null) {
@@ -79,7 +77,7 @@ public class ClientApplication implements ClientInterface {
             }
 
             ClientWindow window = new ClientWindow(clientInterface);
-            this.clientWindow = window;
+            clientWindow = window;
             return window;
 
         }
@@ -91,7 +89,7 @@ public class ClientApplication implements ClientInterface {
      * @param password password : Password given by user
      * @param address address : Address given by yser
      * @param postcode : valid postcode given by user
-     * @return
+     * @return Registered User instance
      */
     @Override
     public User register(String username, String password, String address, Postcode postcode) {
@@ -117,11 +115,11 @@ public class ClientApplication implements ClientInterface {
      * Logs in a user when the Login tab of the Client is used
      * @param username username : Username given by the User
      * @param password password : Password given by the user
-     * @return
+     * @return Logged in user Instance
      */
     @Override
     public User login(String username, String password) {
-        ArrayList<String> loginDetails = new ArrayList();
+        ArrayList<String> loginDetails = new ArrayList<>();
         loginDetails.add(username);
         loginDetails.add(password);
         //Send the login details to the server
@@ -182,7 +180,7 @@ public class ClientApplication implements ClientInterface {
     /**
      * Gets the Dish Description
      * @param dish Dish to lookup
-     * @return
+     * @return Dish description as string
      */
     @Override
     public String getDishDescription(Dish dish) {
@@ -192,7 +190,7 @@ public class ClientApplication implements ClientInterface {
     /**
      * Gets the Dish price
      * @param dish Dish to lookup
-     * @return
+     * @return Dish price
      */
     @Override
     public Number getDishPrice(Dish dish) {
@@ -320,7 +318,8 @@ public class ClientApplication implements ClientInterface {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.STATUS);
-            if (order.getOrderState() == Order.OrderState.COMPLETE | order.getOrderState() == Order.OrderState.CANCELLED) {
+            Order receivedOrder = (Order) receivedMessage.getPayload();
+            if (receivedOrder.getOrderState() == Order.OrderState.COMPLETE | receivedOrder.getOrderState() == Order.OrderState.CANCELLED) {
                 return true;
             } else {
                 return false;

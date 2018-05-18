@@ -26,10 +26,6 @@ public class StockManager implements Serializable {
         dishStock = new HashMap<>();
         ingredientStock = new HashMap<>();
     }
-    public StockManager(HashMap<Dish, StockItem> dishStock, HashMap<Ingredient, StockItem> ingredientStock) {
-        this.dishStock = dishStock;
-        this.ingredientStock = ingredientStock;
-    }
 
     /**
      * Used for adding a new dish, or adding more prepared dishes to the prepared dishes stock
@@ -157,7 +153,7 @@ public class StockManager implements Serializable {
 
     /**
      * Called when the Staff have finished making an order, removes the number of each order from the stock.
-     * @param order
+     * @param order Completed order
      */
     public void orderComplete(HashMap<Dish, Number> order) {
         for (Map.Entry<Dish, Number> orderedItem : order.entrySet()) {

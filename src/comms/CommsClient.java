@@ -1,8 +1,6 @@
 package comms;
 
 import client.ClientInterface;
-import client.ClientWindow;
-import common.UpdateEvent;
 import exceptions.InvalidMessageException;
 
 import java.io.*;
@@ -31,8 +29,8 @@ public class CommsClient extends Thread implements Comms {
 
     /**
      * Accepts a new Server Connection, obtains ObjectInputStream and ObjectOutputStream and sends the client UID (hashCode)
-     * @param client
-     * @param port
+     * @param client ClientInterface instance
+     * @param port Port to start the connection on
      */
     public CommsClient(ClientInterface client, int port) {
         this.client = client;
@@ -75,7 +73,7 @@ public class CommsClient extends Thread implements Comms {
     @Override
     public void run() {
         while (running) {
-            Message received = null;
+            Message received;
             try {
                 try {
                     received = (Message) in.readObject();
@@ -151,7 +149,7 @@ public class CommsClient extends Thread implements Comms {
      * Sends a message to a specific client UID, but since we are a client already this is ignored and sent to the server
      * @param uid : Unique ID to send message to (Not relevant)
      * @param message : Message to be sent
-     * @return
+     * @return Message send success
      */
     @Override
     public synchronized boolean sendMessage(int uid, Message message) {

@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class Supplier extends Model implements Serializable {
 
-    String supplierName;
+    private String supplierName;
     private Integer distance;
 
     public Supplier(String name, Number distance) {

@@ -11,7 +11,7 @@ public class User extends Model implements Serializable {
     private String password;
     private String location;
     private Postcode postcode;
-    public int ordersMade = 0;
+    private int ordersMade = 0;
     //The UID of the client this user is logged in to. (-1 if not logged in)
     private int clientUID = -1;
 
@@ -50,11 +50,7 @@ public class User extends Model implements Serializable {
      * @return : True if logged in, False if not.
      */
     public boolean isLoggedIn() {
-        if (clientUID != -1) {
-            return true;
-        } else {
-            return false;
-        }
+        return clientUID != -1;
     }
 
     /**

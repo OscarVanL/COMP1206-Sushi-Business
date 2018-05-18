@@ -6,7 +6,6 @@ import exceptions.*;
 import server.ServerInterface;
 import server.ServerWindow;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +18,6 @@ import java.util.Map;
 public class ServerApplication extends Thread implements ServerInterface {
 
     private static volatile boolean running = true;
-    private static Thread commsThread = null;
-    private ServerWindow serverWindow;
     private Configuration config;
     private DataPersistence backup;
     private static CommsServer communication;
@@ -43,7 +40,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     public static void main(String args[]) {
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
-        app.serverWindow = app.launchGUI(serverInterface);
+        app.launchGUI(serverInterface);
     }
 
     /**
@@ -82,9 +79,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * @return : ServerWindow
      */
     ServerWindow launchGUI(ServerInterface serverInterface) {
-        ServerWindow window = new ServerWindow(serverInterface);
-        this.serverWindow = window;
-        return window;
+        return new ServerWindow(serverInterface);
     }
 
     /**
@@ -92,7 +87,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     private void startComms() {
         try {
-            commsThread = new CommsServer(5000);
+            Thread commsThread = new CommsServer(5000);
             communication = (CommsServer) commsThread;
             commsThread.start();
             running = true;
@@ -106,7 +101,6 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Loads a configuration file, either with no initialised data or with already initialised data.
      * Tutorial for Java 8 file reading used: https://www.mkyong.com/java8/java-8-stream-read-a-file-line-by-line/
      * @param filename configuration file to load
-     * @throws FileNotFoundException Exception thrown if the file is not found.
      */
     @Override
     public void loadConfiguration(String filename) {
@@ -131,7 +125,6 @@ public class ServerApplication extends Thread implements ServerInterface {
         drones.clear();
         ingredientsRestocked = true;
         dishesRestocked = true;
-        dishesRestocked = true;
         if (communication != null) {
             communication.dropConnections();
         } else {
@@ -146,9 +139,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             Thread backupThread = new Thread(backup);
             backupThread.start();
             notifyUpdate();
-        } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -160,7 +151,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     @Override
     public void setRestockingIngredientsEnabled(boolean enabled) {
-        this.ingredientsRestocked = enabled;
+        ingredientsRestocked = enabled;
     }
 
     /**
@@ -169,7 +160,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     @Override
     public void setRestockingDishesEnabled(boolean enabled) {
-        this.dishesRestocked = enabled;
+        dishesRestocked = enabled;
 
     }
 
@@ -313,7 +304,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     /**
      * Sets the threshold that stock must fall to before the Dish is to be restocked.
      * @param dish dish to query restock threshold of
-     * @return
+     * @return Restock Threshold
      */
     @Override
     public Number getRestockThreshold(Dish dish) {
@@ -395,7 +386,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     /**
      * Removes an Ingredient
      * @param ingredient ingredient to remove
-     * @throws UnableToDeleteException
+     * @throws UnableToDeleteException Exception thrown if the Ingredient is contained in any dish
      */
     @Override
     public void removeIngredient(Ingredient ingredient) throws UnableToDeleteException {
@@ -528,8 +519,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     @Override
     public List<Drone> getDrones() {
-        List<Drone> droneList = new ArrayList<>(drones.keySet());
-        return droneList;
+        return new ArrayList<>(drones.keySet());
     }
 
     /**
@@ -588,8 +578,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     @Override
     public List<Staff> getStaff() {
-        List<Staff> staffList = new ArrayList<>(staff.keySet());
-        return staffList;
+        return new ArrayList<>(staff.keySet());
     }
 
     /**
@@ -779,7 +768,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     /**
      * Removes a user from the restaurant.
      * @param user to remove
-     * @throws UnableToDeleteException
+     * @throws UnableToDeleteException : Exception thrown if user has open order
      */
     @Override
     public void removeUser(User user) throws UnableToDeleteException {
@@ -912,7 +901,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Sends list of Dishes from the Server to the Client
      * @param message : Request message from Client
      */
-    public void processGetDishes(Message message) {
+    private void processGetDishes(Message message) {
         int uid = message.getConnectionUID();
         Message reply = new Message(MessageType.DISHES, (ArrayList<Dish>) this.getDishes());
         communication.sendMessage(uid, reply);
@@ -922,7 +911,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Sends the description for a Dish requested by Client
      * @param message : Request message from Client
      */
-    public void processGetDishDesc(Message message) {
+    private void processGetDishDesc(Message message) {
         int uid = message.getConnectionUID();
         //The client Dish is considered inconsistent with the Server dish (which may have changed)
         //So we have to find the server's instance of the Dish (Names match).
@@ -948,7 +937,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Sends the price of a Dish requested by the Client
      * @param message : Request message from Client
      */
-    public void processGetDishPrice(Message message) {
+    private void processGetDishPrice(Message message) {
         int uid = message.getConnectionUID();
         //The client Dish is considered inconsistent with the Server dish (which may have changed)
         //So we have to find the server's instance of the Dish (Names match).
@@ -975,7 +964,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Sends the Basket associated with a given User requested by the Client
      * @param message : Request message from client
      */
-    public void processGetBasket(Message message) {
+    private void processGetBasket(Message message) {
         int uid = message.getConnectionUID();
 
         Message reply = new Message(MessageType.BASKET, null);
@@ -1004,7 +993,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Gets the basket cost associated with a given User requested by the Client
      * @param message : Request message from Client
      */
-    public void processGetBasketCost(Message message) {
+    private void processGetBasketCost(Message message) {
         int uid = message.getConnectionUID();
         User clientUser = (User) message.getPayload();
         User serverUser = null;
@@ -1028,7 +1017,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Gets all Orders for a particular user (if user is null, for all users) and sends to the Client
      * @param message : Request message from Client
      */
-    public void processGetOrders(Message message) {
+    private void processGetOrders(Message message) {
         int uid = message.getConnectionUID();
         User clientUser = (User) message.getPayload();
 
@@ -1054,7 +1043,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Gets the Order Status of a Order requested by the Client
      * @param message : Request message from Client
      */
-    public void processGetOrderStatus(Message message) {
+    private void processGetOrderStatus(Message message) {
         int uid = message.getConnectionUID();
         Order clientOrder = (Order) message.getPayload();
 
@@ -1073,7 +1062,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Gets the Order Cost of a Order requested by the Client
      * @param message : Request message from Client
      */
-    public void processGetOrderCost(Message message) {
+    private void processGetOrderCost(Message message) {
         int uid = message.getConnectionUID();
         Order clientOrder = (Order) message.getPayload();
         Order serverOrder = null;
@@ -1092,7 +1081,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Adds a Dish to the Basket in the Quantity requested by the Client
      * @param message : Request message from Client
      */
-    public void processAddDishToBasket(Message message) {
+    private void processAddDishToBasket(Message message) {
         //Structure: [0]User user, [1]Dish dish, [2] Number quantity
         ArrayList<Object> dishData = (ArrayList<Object>) message.getPayload();
         //Instances of User and Dish that the client has (may be outdated)
@@ -1132,7 +1121,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Note: If this dish is not already in the basket, it is added.
      * @param message : Request message from Client
      */
-    public void processUpdateDishInBasket(Message message) {
+    private void processUpdateDishInBasket(Message message) {
         //Structure: [0]User user, [1]Dish dish, [2] Number newQuantity
         ArrayList<Object> dishData = (ArrayList<Object>) message.getPayload();
         //Instances of User and Dish that the client has (may be outdated).
@@ -1170,10 +1159,10 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Checks out the Order requested by the Client
      * @param message : Request message from Client
      */
-    public void processUserCheckout(Message message) {
+    private void processUserCheckout(Message message) {
         int uid = message.getConnectionUID();
         Order order = (Order) message.getPayload();
-        Dish clientDish = null;
+        Dish clientDish;
         Dish serverDish = null;
         HashMap<Dish, Number> serverOrderData = new HashMap<>();
 
@@ -1207,7 +1196,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Clears the Basket requested by the Client
      * @param message : Request message from Client
      */
-    public void processBasketClear(Message message) {
+    private void processBasketClear(Message message) {
         User clientUser = (User) message.getPayload();
         User serverUser = null;
 
@@ -1231,7 +1220,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Process the client request to cancel a given Order.
      * @param message : Request message from Client
      */
-    public void processOrderCancel(Message message) {
+    private void processOrderCancel(Message message) {
         Order clientOrder = (Order) message.getPayload();
 
         for (Order order : orders) {
@@ -1265,7 +1254,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * Sends a server message telling the Client to update. Called after a change on the server is made such as
      * adding a new Dish to the restaurant.
      */
-    public void notifyClient() {
+    private void notifyClient() {
         if (communication != null) {
             communication.sendMessage(new Message(MessageType.UPDATE));
         }

@@ -16,12 +16,10 @@ import java.util.Map;
 public class CommsServer extends Thread implements Comms {
     private boolean running = true;
     private boolean newMessage = false;
-    private int port;
     private ServerSocket serverSocket;
     private HashMap<Thread, Socket> clientConnection = new HashMap<>();
 
     public CommsServer(int port) throws IOException {
-        this.port = port;
         serverSocket = new ServerSocket(port);
     }
 
@@ -41,7 +39,7 @@ public class CommsServer extends Thread implements Comms {
                 }
             }
 
-            Socket socket = null;
+            Socket socket;
             System.out.println("Waiting for a connection");
 
             try {
@@ -55,7 +53,7 @@ public class CommsServer extends Thread implements Comms {
                 thread.start();
 
             } catch (Exception e) {
-                System.out.println(e);
+                e.printStackTrace();
             }
         }
     }

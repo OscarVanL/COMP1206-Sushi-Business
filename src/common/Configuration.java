@@ -24,13 +24,13 @@ public class Configuration {
 
     /**
      * Parses contents of the configuration file and calls relevant methods to instantiate objects.
-     * @throws FileNotFoundException
-     * @throws InvalidSupplierException
-     * @throws InvalidStockItemException
-     * @throws InvalidIngredientException
-     * @throws InvalidPostcodeException
-     * @throws InvalidUserException
-     * @throws InvalidDishException
+     * @throws FileNotFoundException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidSupplierException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidStockItemException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidIngredientException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidPostcodeException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidUserException One of the exceptions that can be thrown when loading from Config.
+     * @throws InvalidDishException One of the exceptions that can be thrown when loading from Config.
      */
     public void loadConfiguration() throws FileNotFoundException, InvalidSupplierException, InvalidStockItemException, InvalidIngredientException, InvalidPostcodeException, InvalidUserException, InvalidDishException {
         List<String> allLines;
@@ -234,11 +234,9 @@ public class Configuration {
                     throw new InvalidDishException("Non-valid dish entered for " + orderUser.getName() + "'s order when reading configuration file.");
                 }
                 //Finally, adds the dish and quantity to the order.
-                if (order != null) {
-                    order.addDish(orderDish, Integer.parseInt(orderInfo[0]));
-                    order.setOrderState(Order.OrderState.PREPARING);
-                    server.notifyUpdate();
-                }
+                order.addDish(orderDish, Integer.parseInt(orderInfo[0]));
+                order.setOrderState(Order.OrderState.PREPARING);
+                server.notifyUpdate();
             }
             server.addOrder(order);
         }

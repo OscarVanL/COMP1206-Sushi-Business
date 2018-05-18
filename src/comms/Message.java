@@ -19,11 +19,11 @@ public class Message implements Serializable {
 
     /**
      * Used specifically for 'requests' that don't require any payload, such as GET_DISHES from Client.
-     * @param requestType
+     * @param requestType : Type of request
      */
     public Message(MessageType requestType) {
         this.type = requestType;
-        this.payload = new String("No Object");
+        this.payload = "No Object";
     }
 
     /**

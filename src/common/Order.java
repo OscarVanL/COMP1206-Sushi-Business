@@ -99,11 +99,7 @@ public class Order extends Model implements Serializable {
      * @return True if dish is present. False if dish is not present.s
      */
     public boolean containsDish(Dish dish) {
-        if (basket.containsKey(dish)) {
-            return true;
-        } else {
-            return false;
-        }
+        return basket.containsKey(dish);
     }
 
     /**
@@ -146,7 +142,7 @@ public class Order extends Model implements Serializable {
             Integer quantity = basketEntry.getValue().intValue();
             this.orderPrice+=dish.dishPrice()*quantity;
         }
-        if (oldPrice != orderPrice) {
+        if (!oldPrice.equals(orderPrice)) {
             notifyUpdate("price", oldPrice, this.orderPrice);
         }
 
@@ -191,14 +187,14 @@ public class Order extends Model implements Serializable {
     @Override
     public String toString() {
         StringBuilder orderDetails = new StringBuilder();
-        orderDetails.append(user.getName() + "'s order:");
+        orderDetails.append(user.getName()).append("'s order:");
         boolean firstDish = true;
         for (Map.Entry<Dish, Number> basketEntry : basket.entrySet()) {
             if (firstDish) {
-                orderDetails.append(" " + basketEntry.getValue() + " x " + basketEntry.getKey().getName());
+                orderDetails.append(" ").append(basketEntry.getValue()).append(" x ").append(basketEntry.getKey().getName());
                 firstDish = false;
             } else {
-                orderDetails.append(", " + basketEntry.getValue() + " x " + basketEntry.getKey().getName());
+                orderDetails.append(", ").append(basketEntry.getValue()).append(" x ").append(basketEntry.getKey().getName());
             }
 
         }

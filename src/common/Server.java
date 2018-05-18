@@ -45,7 +45,7 @@ public class Server implements ServerInterface {
 
     /**
      * Gets the StockManager's Dish and Ingredient stock.
-     * @return
+     * @return List of StockManager's StockItems
      */
     public List<StockItem> getStock() {
         return stockManager.getStock();

@@ -1,7 +1,5 @@
 package comms;
 
-import java.io.Serializable;
-
 /**
  * @author Oscar van Leusen
  */

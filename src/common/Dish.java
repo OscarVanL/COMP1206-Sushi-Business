@@ -100,11 +100,7 @@ public class Dish extends Model implements Serializable {
      * @return : True if present, False if not.
      */
     public boolean containsIngredient(Ingredient ingredient) {
-        if (ingredientAmounts.containsKey(ingredient)) {
-            return true;
-        } else {
-            return false;
-        }
+        return ingredientAmounts.containsKey(ingredient);
     }
 
     /**
