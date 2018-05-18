@@ -21,7 +21,7 @@ public class ServerApplication extends Thread implements ServerInterface {
     private static Thread commsThread = null;
     private ServerWindow serverWindow;
     private Configuration config;
-    private DataPersistence backup;
+    private Thread backup;
     private static CommsServer communication;
 
     private StockManager stockManager = new StockManager();
@@ -131,6 +131,7 @@ public class ServerApplication extends Thread implements ServerInterface {
             config = new Configuration(server, filename);
             config.loadConfiguration();
             backup = new DataPersistence(server, stockManager);
+            backup.start();
             notifyUpdate();
         } catch (InvalidSupplierException | InvalidStockItemException | InvalidIngredientException | InvalidPostcodeException | InvalidUserException | InvalidDishException e) {
             e.printStackTrace();

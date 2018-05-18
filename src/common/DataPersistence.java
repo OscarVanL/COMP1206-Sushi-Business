@@ -13,7 +13,7 @@ import java.util.Map;
  * @author Oscar van Leusen
  */
 public class DataPersistence extends Thread {
-    File folder = new File("/");
+    File folder = new File(System.getProperty("user.dir"));
     FileWriter writer;
     Server server;
     StockManager stockManager;
@@ -26,7 +26,7 @@ public class DataPersistence extends Thread {
     List<Staff> staff;
     List<Drone> drones;
 
-    public DataPersistence(Server server, StockManager stockManager) throws IOException {
+    public DataPersistence(Server server, StockManager stockManager) {
         this.server = server;
         this.stockManager = stockManager;
     }
@@ -36,7 +36,7 @@ public class DataPersistence extends Thread {
         while (true) {
             //Ensures there are only 5 backups at a time. If there are more than 5 then existing backups are removed.
             if (countBackups() > 5) {
-                removeExcessBackups();
+                removeExcessBackup();
             }
             //Makes a backup every 60 seconds.
             try {
@@ -54,16 +54,20 @@ public class DataPersistence extends Thread {
             this.drones = server.getDrones();
 
             List<String> restaurantState = parseToStrings();
-            for (String string : restaurantState) {
-                try {
-                    writer = new FileWriter(new File("Sushi-Backup-" + new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())));
-                    writer.write(string);
+            String filePath = "Sushi-Backup-" + new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".txt";
+            System.out.println("Backing up to: " + filePath);
+
+            try {
+                writer = new FileWriter(new File(filePath));
+                for (String line : restaurantState) {
+                    writer.write(line);
                     writer.flush();
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
         }
     }
 
@@ -71,14 +75,15 @@ public class DataPersistence extends Thread {
         File[] filesInFolder = folder.listFiles();
         int numBackups = 0;
         for (int i=0; i<filesInFolder.length; i++) {
-            if (filesInFolder[0].isFile() && filesInFolder[i].getName().contains("Sushi-Backup")) {
+            if (filesInFolder[i].isFile() && filesInFolder[i].getName().contains("Sushi-Backup")) {
                 numBackups++;
             }
         }
+        System.out.println("Number of existing backups: " + numBackups);
         return numBackups;
     }
 
-    private void removeExcessBackups() {
+    private void removeExcessBackup() {
         File oldest = null;
 
         long lastModified = Long.MAX_VALUE;
@@ -154,7 +159,7 @@ public class DataPersistence extends Thread {
             sb.append(":");
             sb.append(dish.getDishDescription());
             sb.append(":");
-            sb.append(dish.dishPrice());
+            sb.append(dish.dishPrice().intValue());
             sb.append(":");
             sb.append(dish.getRestockThreshold());
             sb.append(":");
@@ -216,8 +221,8 @@ public class DataPersistence extends Thread {
             sb = new StringBuilder();
             sb.append("STAFF:");
             sb.append(staff.getName());
-            staffOutput.add(sb.toString());
             sb.append("\n");
+            staffOutput.add(sb.toString());
         }
         return staffOutput;
     }
