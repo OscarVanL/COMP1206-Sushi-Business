@@ -1,40 +1,190 @@
 Part 1: Ingredients, Suppliers and Sushi Dishes
 
 List of classes implemented (written as package.class)
+common.Ingredient
+common.Supplier
+common.Dish
 
 List of methods implemented (written as package.class.method):
+common.Ingredient.Ingredient
+common.Ingredient.Ingredient
+common.Ingredient.getName
+common.Ingredient.getRestockAmount
+common.Ingredient.getRestockThreshold
+common.Ingredient.getSupplier
+common.Ingredient.getUnit
+common.Ingredient.setMeasurementUnit
+common.Ingredient.setName
+common.Ingredient.setSupplier
+common.Ingredient.toString
+common.Supplier.Supplier
+common.Supplier.Supplier
+common.Supplier.getDistance
+common.Supplier.getName
+common.Supplier.setDistance
+common.Supplier.setName
+common.Dish.Dish
+common.Dish.Dish
+common.Dish.addIngredient
+common.Dish.containsIngredient
+common.Dish.dishPrice
+common.Dish.getDishDescription
+common.Dish.getDishIngredients
+common.Dish.getName
+common.Dish.getQuantity
+common.Dish.getRecipe
+common.Dish.getRestockAmount
+common.Dish.getRestockThreshold
+common.Dish.removeIngredient
+common.Dish.setPrice
+common.Dish.setQuantity
+common.Dish.setRecipe
 
 1 paragraph description of what you did:
+* Ingredient holds attributes unit, name, Supplier, restock amount, restock threshold and has relevant 
+  getters/setter.
+* Supplier holds attributes distance and name and has relevant getters/setters.
+* Dish holds a Map of Ingredient to Quantity and an instance of StockManager, as well as attributes name, 
+  description, price.
 
 -----------------
 
 Part 2: Stock Management 
 
 List of classes implemented (written as package.class)
+common.StockItem
+common.StockManager
 
 List of methods implemented (written as package.class.method):
+common.StockItem.StockItem
+common.StockItem.StockItem
+common.StockItem.addStock
+common.StockItem.beingRestocked
+common.StockItem.getRestockAmount
+common.StockItem.getRestockThreshold
+common.StockItem.getStock
+common.StockItem.getStockedItem
+common.StockItem.isDish
+common.StockItem.isIngredient
+common.StockItem.removeStock
+common.StockItem.setBeingRestocked
+common.StockItem.setRestockAmount
+common.StockItem.setRestockThreshold
+common.StockItem.setStock
+common.StockManager.StockManager
+common.StockManager.StockManager
+common.StockManager.addDish
+common.StockManager.addDish
+common.StockManager.addDishes
+common.StockManager.addIngredient
+common.StockManager.addIngredient
+common.StockManager.addIngredients
+common.StockManager.canMakeMinQuantity
+common.StockManager.findIngredientToRestock
+common.StockManager.getDishStockLevels
+common.StockManager.getIngredientStockLevels
+common.StockManager.getRestockAmount
+common.StockManager.getRestockThreshold
+common.StockManager.getStock
+common.StockManager.getStockItem
+common.StockManager.getStockItem
+common.StockManager.getStockLevel
+common.StockManager.orderComplete
+common.StockManager.removeDish
+common.StockManager.removeIngredient
+common.StockManager.restockDish
+common.StockManager.restockIngredient
+common.StockManager.setRestockAmount
+common.StockManager.setRestockThreshold
+common.StockManager.setStockLevel
 
 1 paragraph description of what you did:
-
+* StockItem is used to hold data on the amount of stock, restock threshold and restock amount for a SINGLE
+  Dish or Ingredient. It holds various functions for getting and manipulating this data.
+* StockManager holds data on ALL Dishes and Ingredients, with Maps for Dishes to their StockItems and
+  Maps for Ingredients to their StockItems. It also holds various functions for manipulating this data.
 -----------------
 
 Part 3: Kitchen Staff 
 
 List of classes implemented (written as package.class)
+common.Staff
 
 List of methods implemented (written as package.class.method):
+common.Staff.Staff
+common.Staff.Staff
+common.Staff.cancelThread
+common.Staff.checkOrderComplete
+common.Staff.findDishToRestock
+common.Staff.getJobState
+common.Staff.getName
+common.Staff.jobSummary
+common.Staff.run
+common.Staff.toString
 
 1 paragraph description of what you did:
+* Staff holds the staff's name, the list of orders and stock manager. It uses a thread to constantly cook
+  new dishes if stock levels fall or if a big order is made. The staff member's states are stored in an
+  enum called StaffState.
 
 -----------------
 
 Part 4: Communication Layer 
 
 List of classes implemented (written as package.class)
-
+comms.Comms
+comms.CommsClient
+comms.CommsClientHandler
+comms.CommsServer
+comms.Message
 List of methods implemented (written as package.class.method):
-
+comms.Comms.Comms
+comms.Comms.getMessageStatus
+comms.Comms.receiveMessage
+comms.Comms.receiveMessage
+comms.Comms.sendMessage
+comms.Comms.sendMessage
+comms.CommsClient.CommsClient
+comms.CommsClient.CommsClient
+comms.CommsClient.getMessageStatus
+comms.CommsClient.initialised
+comms.CommsClient.receiveMessage
+comms.CommsClient.receiveMessage
+comms.CommsClient.run
+comms.CommsClient.sendMessage
+comms.CommsClient.sendMessage
+comms.CommsClient.startServerNotifyCheck
+comms.CommsClientHandler.CommsClientHandler
+comms.CommsClientHandler.CommsClientHandler
+comms.CommsClientHandler.cancelThread
+comms.CommsClientHandler.getUID
+comms.CommsClientHandler.isRunning
+comms.CommsClientHandler.receiveMessage
+comms.CommsClientHandler.run
+comms.CommsClientHandler.sendMessage
+comms.CommsServer.CommsServer
+comms.CommsServer.CommsServer
+comms.CommsServer.dropConnections
+comms.CommsServer.getMessageStatus
+comms.CommsServer.receiveMessage
+comms.CommsServer.receiveMessage
+comms.CommsServer.run
+comms.CommsServer.sendMessage
+comms.CommsServer.sendMessage
+comms.CommsServer.setMessageStatus
+comms.Message.Message
+comms.Message.Message
+comms.Message.Message
+comms.Message.getConnectionUID
+comms.Message.getPayload
+comms.Message.getType
+comms.Message.setConnectionUID
 1 paragraph description of what you did:
+* CommsServer is a Thread that constantly tries to accept new client connections (from ClientComms). If it 
+  connects it passes the socket into a new CommsClientHandler, which is another thread that then manages 
+  client/server message exchanges for that client.
+* Message is an object that takes an MessageType enum value and payload (an object), it is serializable so
+  can be sent across sockets.
 
 -----------------
 
@@ -42,19 +192,111 @@ Part 5: Client
 
 List of classes implemented (written as package.class)
 
+default.ClientApplication
+common.Order
+common.User
+common.Postcode
+
 List of methods implemented (written as package.class.method):
 
+default.ClientApplication.ClientApplication
+default.ClientApplication.addDishToBasket
+default.ClientApplication.addUpdateListener
+default.ClientApplication.cancelOrder
+default.ClientApplication.checkoutBasket
+default.ClientApplication.clearBasket
+default.ClientApplication.getBasket
+default.ClientApplication.getBasketCost
+default.ClientApplication.getDishDescription
+default.ClientApplication.getDishes
+default.ClientApplication.getDishPrice
+default.ClientApplication.getOrderCost
+default.ClientApplication.getOrders
+default.ClientApplication.getOrderStatus
+default.ClientApplication.getPostcodes
+default.ClientApplication.initialise
+default.ClientApplication.isOrderComplete
+default.ClientApplication.launchGUI
+default.ClientApplication.login
+default.ClientApplication.main
+default.ClientApplication.notifyUpdate
+default.ClientApplication.register
+default.ClientApplication.updateDishInBasket
+common.Order.Order
+common.Order.Order
+common.Order.addDish
+common.Order.addDishes
+common.Order.calculatePrice
+common.Order.cancelOrder
+common.Order.clear
+common.Order.containsDish
+common.Order.deliverOrder
+common.Order.getBasket
+common.Order.getName
+common.Order.getOrderState
+common.Order.getUser
+common.Order.getUserOrderNum
+common.Order.orderPrice
+common.Order.removeDish
+common.Order.removeDishQuantity
+common.Order.setBasket
+common.Order.setOrderState
+common.Order.toString
+common.Order.updateDishQuantity
+common.User.User
+common.User.User
+common.User.getAddress
+common.User.getClientUID
+common.User.getName
+common.User.getOrdersMade
+common.User.getPassword
+common.User.getPostcode
+common.User.incrementOrdersMade
+common.User.isDeleteSafe
+common.User.isLoggedIn
+common.User.logout
+common.User.passwordMatches
+common.User.setAddress
+common.User.setClientUID
+common.User.setPostcode
+common.Postcode.Postcode
+common.Postcode.Postcode
+common.Postcode.getDistance
+common.Postcode.getName
+
 1 paragraph description of what you did:
+* ClientApplication holds all logic for Client control, including starting threads and starting comms.
+* It implements ClientInterface and provides the logic for these methods.
+* An instance of Order holds a single order for a user. It holds an OrderState enum allowing for state control
+  through the restaurant.
+* User holds the user's username, password, location and Postcode.
+* Postcode holds the text postcode and distance from restaurant.
 
 -----------------
 
 Part 6: Drones 
 
-List of classes implemented (written as package.class)
+List of classes implemented (written as package.class):
+
+common.Drone
 
 List of methods implemented (written as package.class.method):
 
+common.Drone.Drone
+common.Drone.Drone
+common.Drone.cancelThread
+common.Drone.getJobState
+common.Drone.getName
+common.Drone.getSpeed
+common.Drone.jobSummary
+common.Drone.run
+common.Drone.setDroneState
+common.Drone.toString
+
 1 paragraph description of what you did:
+* Drone holds the drone number, list of orders and StockManager. It has a thread that looks for ingredients
+  that have fallen below restock threshold and also for orders that are in the OrderState.PREPARED state to
+  deliver.
 
 -----------------
 
@@ -62,9 +304,25 @@ Part 7: Configuration
 
 List of classes implemented (written as package.class)
 
+common.Configuration
+
 List of methods implemented (written as package.class.method):
 
+common.Configuration.Configuration
+common.Configuration.Configuration
+common.Configuration.loadConfiguration
+common.Configuration.loadDishes
+common.Configuration.loadDrones
+common.Configuration.loadIngredients
+common.Configuration.loadOrders
+common.Configuration.loadPostcodes
+common.Configuration.loadStaff
+common.Configuration.loadStock
+common.Configuration.loadSuppliers
+common.Configuration.loadUsers
+
 1 paragraph description of what you did:
+* Configuration instantiates the lists, maps and objects used in the ServerApplication from a text file.
 
 -----------------
 
@@ -72,22 +330,194 @@ Part 8: Server
 
 List of classes implemented (written as package.class)
 
+common.ServerApplication
+common.Server
+
 List of methods implemented (written as package.class.method):
 
-1 paragraph description of what you did:
+common.ServerApplication.ServerApplication
+common.ServerApplication.addDish
+common.ServerApplication.addDrone
+common.ServerApplication.addIngredient
+common.ServerApplication.addIngredientToDish
+common.ServerApplication.addPostcode
+common.ServerApplication.addStaff
+common.ServerApplication.addSupplier
+common.ServerApplication.addUpdateListener
+common.ServerApplication.addUser
+common.ServerApplication.getDishes
+common.ServerApplication.getDishStockLevels
+common.ServerApplication.getDrones
+common.ServerApplication.getDroneSpeed
+common.ServerApplication.getDroneStatus
+common.ServerApplication.getIngredients
+common.ServerApplication.getIngredientStockLevels
+common.ServerApplication.getOrderCost
+common.ServerApplication.getOrderDistance
+common.ServerApplication.getOrders
+common.ServerApplication.getOrderStatus
+common.ServerApplication.getPostcodes
+common.ServerApplication.getRecipe
+common.ServerApplication.getRestockAmount
+common.ServerApplication.getRestockAmount
+common.ServerApplication.getRestockThreshold
+common.ServerApplication.getRestockThreshold
+common.ServerApplication.getStaff
+common.ServerApplication.getStaffStatus
+common.ServerApplication.getSupplierDistance
+common.ServerApplication.getSuppliers
+common.ServerApplication.getUsers
+common.ServerApplication.initialise
+common.ServerApplication.isOrderComplete
+common.ServerApplication.launchGUI
+common.ServerApplication.loadConfiguration
+common.ServerApplication.main
+common.ServerApplication.notifyClient
+common.ServerApplication.notifyUpdate
+common.ServerApplication.processAddDishToBasket
+common.ServerApplication.processBasketClear
+common.ServerApplication.processGetBasket
+common.ServerApplication.processGetBasketCost
+common.ServerApplication.processGetDishDesc
+common.ServerApplication.processGetDishes
+common.ServerApplication.processGetDishPrice
+common.ServerApplication.processGetOrderCost
+common.ServerApplication.processGetOrders
+common.ServerApplication.processGetOrderStatus
+common.ServerApplication.processGetPostcodes
+common.ServerApplication.processLogin
+common.ServerApplication.processMessage
+common.ServerApplication.processOrderCancel
+common.ServerApplication.processRegister
+common.ServerApplication.processUpdateDishInBasket
+common.ServerApplication.processUserCheckout
+common.ServerApplication.removeDish
+common.ServerApplication.removeDrone
+common.ServerApplication.removeIngredient
+common.ServerApplication.removeIngredientFromDish
+common.ServerApplication.removeOrder
+common.ServerApplication.removePostcode
+common.ServerApplication.removeStaff
+common.ServerApplication.removeSupplier
+common.ServerApplication.removeUser
+common.ServerApplication.run
+common.ServerApplication.setRecipe
+common.ServerApplication.setRestockingDishesEnabled
+common.ServerApplication.setRestockingIngredientsEnabled
+common.ServerApplication.setRestockLevels
+common.ServerApplication.setRestockLevels
+common.ServerApplication.setStock
+common.ServerApplication.setStock
+common.ServerApplication.startComms
+common.Server.Server
+common.Server.Server
+common.Server.addDish
+common.Server.addDrone
+common.Server.addIngredient
+common.Server.addIngredientToDish
+common.Server.addOrder
+common.Server.addPostcode
+common.Server.addStaff
+common.Server.addSupplier
+common.Server.addUpdateListener
+common.Server.addUser
+common.Server.getDishes
+common.Server.getDishStockLevels
+common.Server.getDrones
+common.Server.getDroneSpeed
+common.Server.getDroneStatus
+common.Server.getIngredients
+common.Server.getIngredientStockLevels
+common.Server.getOrderCost
+common.Server.getOrderDistance
+common.Server.getOrders
+common.Server.getOrderStatus
+common.Server.getPostcodes
+common.Server.getRecipe
+common.Server.getRestockAmount
+common.Server.getRestockAmount
+common.Server.getRestockThreshold
+common.Server.getRestockThreshold
+common.Server.getStaff
+common.Server.getStaffStatus
+common.Server.getStock
+common.Server.getSupplierDistance
+common.Server.getSuppliers
+common.Server.getUsers
+common.Server.isOrderComplete
+common.Server.loadConfiguration
+common.Server.notifyUpdate
+common.Server.removeDish
+common.Server.removeDrone
+common.Server.removeIngredient
+common.Server.removeIngredientFromDish
+common.Server.removeOrder
+common.Server.removePostcode
+common.Server.removeStaff
+common.Server.removeSupplier
+common.Server.removeUser
+common.Server.setRecipe
+common.Server.setRestockingDishesEnabled
+common.Server.setRestockingIngredientsEnabled
+common.Server.setRestockLevels
+common.Server.setRestockLevels
+common.Server.setStock
+common.Server.setStock
 
+1 paragraph description of what you did:
+* ServerApplication holds all logic for server control including initialisation, starting threads, starting 
+  comms, loading configuration and checking for new messages from the Client.
+* ServerApplication implements ServerInterface and provides the logic for these methods.
+* Server only exists to give scope to some of the methods I added to ServerApplication in addition to those
+  implemented from ServerImplementation to other Classes in the common package. Most methods simply call
+  those in ServerApplication.
 -----------------
 
 Part 9: Persistence 
 
 List of classes implemented (written as package.class)
 
+common.DataPersistence
+
 List of methods implemented (written as package.class.method):
 
+common.DataPersistence.DataPersistence
+common.DataPersistence.DataPersistence
+common.DataPersistence.backupsRunning
+common.DataPersistence.countBackups
+common.DataPersistence.disableBackups
+common.DataPersistence.enableBackups
+common.DataPersistence.parseDishes
+common.DataPersistence.parseDrones
+common.DataPersistence.parseIngredients
+common.DataPersistence.parseOrders
+common.DataPersistence.parsePostcodes
+common.DataPersistence.parseStaff
+common.DataPersistence.parseStock
+common.DataPersistence.parseSuppliers
+common.DataPersistence.parseToStrings
+common.DataPersistence.parseUsers
+common.DataPersistence.removeExcessBackup
+common.DataPersistence.run
+
 1 paragraph description of what you did:
+* DataPersistence takes an instance of the Server and makes a backup of the object values every 60 seconds.
+* Because of the possibility a backup takes place in-between a data change, up to 5 backups are kept
+  simultaneously.
+* The oldest backup is deleted if the number of backups exceed 5.
 
 -----------------
 
 Assumptions made:
+* Large orders where the units of a Dish exceed the restockThreshold + restockAmount CAN be ordered. In this
+  case multiple orders of the restockAmount are made until the dish stock is sufficient.
+* The time taken for a drone to deliver and collect uses time = (distance*2) / speed with an additional 
+  multiplier to make the delivery time more reasonable.
+* If the server connection drops, the client will close too as the client will not recover.
+* Dish Description and Price cannot be changed while running (the GUI lacks this functionality anyway)
+* By default the restaurant launches the example configuration we were given, other configs can be loaded
+  once launched.
 
 Any other comments:
+Sockets were a nightmare to implement (I suffered from StreamCorruptedExceptions for DAYS) but definitely
+useful to learn! It probably would have saved me tons of 3am debugging had I used file based Comms.
