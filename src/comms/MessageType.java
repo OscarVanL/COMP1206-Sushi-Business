@@ -3,6 +3,7 @@ package comms;
 import java.io.Serializable;
 
 /**
+ * Enum to store all the possible message types
  * @author Oscar van Leusen
  */
 public enum MessageType implements Serializable {

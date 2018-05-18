@@ -16,22 +16,29 @@ public class Supplier extends Model implements Serializable {
         this.distance = distance.intValue();
     }
 
-    @Override
-    public String toString() {
-        return supplierName;
-    }
-
+    /**
+     * Returns the supplier name
+     * @return : String representation of supplier name
+     */
     @Override
     public String getName() {
         return supplierName;
     }
 
+    /**
+     * Sets the supplier name
+     * @param name : New supplier name
+     */
     @Override
     public void setName(String name) {
         notifyUpdate("name", this.name, name);
         this.supplierName = name;
     }
 
+    /**
+     * Sets the distance that the supplier is from the Sushi restaurant.
+     * @param distance : Distance from the restaurant.
+     */
     public void setDistance(Integer distance) {
         notifyUpdate("distance", this.distance, distance);
         this.distance = distance;

@@ -18,15 +18,17 @@ import static java.lang.Thread.sleep;
 public class ClientApplication implements ClientInterface {
 
     //public static boolean ready = false;
-    private ClientWindow clientWindow;
+    private static ClientWindow clientWindow;
     private static CommsClient comms;
     private User connectedUser;
     private List<UpdateListener> listeners = new ArrayList<>();
     private HashMap<Dish, Number> basket = new HashMap<>();
-    private int ordersMade = 0;
-    //Prices can't be changed on the server side once a Dish has been made, so it's safe to store these locally
-    //With no risk of the values becoming outdated.
 
+    /**
+     * Starts the Client Application
+     * Note: Must be started after the Server application.
+     * @param args
+     */
     public static void main(String args[]) {
         ClientInterface clientInterface = initialise();
         ClientApplication app = (ClientApplication) clientInterface;
@@ -39,20 +41,30 @@ public class ClientApplication implements ClientInterface {
             }
         }).start();
 
+        //Waits a brief period after starting the server to ensure that the Comms thread is initialised before launching GUI
         try {
-            sleep(500);
+            sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        ClientWindow window = app.launchGUI(clientInterface);
+        clientWindow = app.launchGUI(clientInterface);
     }
 
+    /**
+     * Instantiates this ClientApplication
+     * @return : ClientInterface instance
+     */
     private static ClientInterface initialise() {
         ClientApplication app = new ClientApplication();
         return app;
     }
 
+    /**
+     * Launches the Client GUI
+     * @param clientInterface : Previously initialised ClientInterface
+     * @return ClientWIndow instance.
+     */
     ClientWindow launchGUI(ClientInterface clientInterface) {
         System.out.println("entered launchGUI");
         synchronized (this) {
@@ -73,6 +85,14 @@ public class ClientApplication implements ClientInterface {
         }
     }
 
+    /**
+     * Registers a user with the Register tab of the Client Window
+     * @param username username : Username given by user
+     * @param password password : Password given by user
+     * @param address address : Address given by yser
+     * @param postcode : valid postcode given by user
+     * @return
+     */
     @Override
     public User register(String username, String password, String address, Postcode postcode) {
         User newUser = new User(username, password, address, postcode);
@@ -93,11 +113,18 @@ public class ClientApplication implements ClientInterface {
         }
     }
 
+    /**
+     * Logs in a user when the Login tab of the Client is used
+     * @param username username : Username given by the User
+     * @param password password : Password given by the user
+     * @return
+     */
     @Override
     public User login(String username, String password) {
         ArrayList<String> loginDetails = new ArrayList();
         loginDetails.add(username);
         loginDetails.add(password);
+        //Send the login details to the server
         boolean success = comms.sendMessage(new Message(MessageType.LOGIN, loginDetails));
         if (success) {
             Message receivedMessage = comms.receiveMessage(MessageType.LOGIN_SUCCESS);
@@ -107,15 +134,19 @@ public class ClientApplication implements ClientInterface {
             } else if (receivedMessage.getPayload() == null) {
                 return null;
             } else {
+                //If the contents of the message aren't null (failed to login), returns the User
                 this.connectedUser = (User) receivedMessage.getPayload();
                 return connectedUser;
             }
         } else {
-            notifyUpdate();
             return null;
         }
     }
 
+    /**
+     * Gets the List of Postcodes from the Server
+     * @return : List of Postcodes
+     */
     @Override
     public List<Postcode> getPostcodes() {
         boolean success = comms.sendMessage(new Message(MessageType.GET_POSTCODES));
@@ -131,6 +162,10 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
+    /**
+     * Gets the List of Dishes from the server
+     * @return : List of Dishes
+     */
     @Override
     public List<Dish> getDishes() {
         boolean success = comms.sendMessage(new Message(MessageType.GET_DISHES));
@@ -144,50 +179,41 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
+    /**
+     * Gets the Dish Description
+     * @param dish Dish to lookup
+     * @return
+     */
     @Override
     public String getDishDescription(Dish dish) {
         return dish.getDishDescription();
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_DESC, dish));
-        if (success) {
-            Message receivedMessage = comms.receiveMessage(MessageType.DISH_DESC);
-            return (String) receivedMessage.getPayload();
-        }
-        return null;**/
-    }
-
-    @Override
-    public Number getDishPrice(Dish dish) {
-        return dish.dishPrice();
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_DISH_PRICE, dish));
-        if (success) {
-            Message receivedMessage = comms.receiveMessage(MessageType.DISH_PRICE);
-            Double price = (Double) receivedMessage.getPayload();
-            prices.put(dish, price);
-            return price;
-        }
-        return null;**/
     }
 
     /**
-     * If our basket isn't initialised load it from the server. If it is, deal with the local basket
+     * Gets the Dish price
+     * @param dish Dish to lookup
+     * @return
+     */
+    @Override
+    public Number getDishPrice(Dish dish) {
+        return dish.dishPrice();
+    }
+
+    /**
+     * Gets the User Basket (stored locally until the user Checks Out)
      * @param user user to lookup
-     * @return : Map<Dish, Number> representing the user's Basket, if it is null then the user has nothing in Basket
+     * @return : Map<Dish, Number> representing the user's Basket
      */
     @Override
     public Map<Dish, Number> getBasket(User user) {
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET, user));
-        if (success) {
-            Message receivedMessage = comms.receiveMessage(MessageType.BASKET);
-            //If the received payload was null the user has nothing in their basket.
-            if (receivedMessage.getPayload() == null) {
-                this.basket = new HashMap<>();
-            } else {
-                this.basket = (Map<Dish, Number>) receivedMessage.getPayload();
-            }
-        }**/
         return this.basket;
     }
 
+    /**
+     * Calculates the price of the User's basket
+     * @param user user to lookup basket : Not actually used since basket is client side.
+     * @return : Number containing Double representation of price
+     */
     @Override
     public Number getBasketCost(User user) {
         Double cost = 0.00;
@@ -199,25 +225,16 @@ public class ClientApplication implements ClientInterface {
         }
 
         return cost;
-        /**boolean success = comms.sendMessage(new Message(MessageType.GET_BASKET_COST, user));
-        if (success) {
-            Message receivedMessage = comms.receiveMessage(MessageType.BASKET_COST);
-            //If the received payload was null the user has nothing in their basket.
-            if (receivedMessage.getPayload() == null) {
-                return 0;
-            }
-            return (Double) receivedMessage.getPayload();
-        }
-        return null;**/
     }
 
+    /**
+     * Adds a Dish to the Basket. If it's already in the basket, adds to the number in the Basket
+     * @param user user of basket : User whose basket should be changed (not used as Basket is held locally)
+     * @param dish dish to change : Dish that should be added
+     * @param quantity quantity to set : Number to add
+     */
     @Override
     public void addDishToBasket(User user, Dish dish, Number quantity) {
-        /**ArrayList<Object> dishToAdd = new ArrayList<>();
-        dishToAdd.add(user);
-        dishToAdd.add(dish);
-        dishToAdd.add(quantity);
-        comms.sendMessage(new Message(MessageType.ADD_DISH, dishToAdd));**/
         if (basket.keySet().contains(dish)) {
             int oldQuantity = basket.get(dish).intValue();
             basket.put(dish, quantity.intValue() + oldQuantity);
@@ -226,16 +243,26 @@ public class ClientApplication implements ClientInterface {
         }
     }
 
+    /**
+     * Updates the quantity of a Dish in the basket
+     * @param user user of basket (Not used since Basket is held Locally)
+     * @param dish dish to change
+     * @param quantity quantity to set. 0 should remove.
+     */
     @Override
     public void updateDishInBasket(User user, Dish dish, Number quantity) {
-        /**ArrayList<Object> dishToUpdate = new ArrayList<>();
-        dishToUpdate.add(user);
-        dishToUpdate.add(dish);
-        dishToUpdate.add(quantity);
-        comms.sendMessage(new Message(MessageType.UPDATE_DISH, dishToUpdate));**/
-        this.basket.put(dish, quantity);
+        if (quantity.intValue() == 0) {
+            basket.remove(dish);
+        } else {
+            this.basket.put(dish, quantity);
+        }
     }
 
+    /**
+     * Checks out the user's Basket with the Server
+     * @param user user of basket (Not used since Basket is held Locally)
+     * @return : New Order object from Server
+     */
     @Override
     public Order checkoutBasket(User user) {
         Order order = new Order(user, user.getOrdersMade());
@@ -255,12 +282,21 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
+    /**
+     * Clears the contents of the Basket
+     * @param user user of basket (Not used since basket is held Locally)
+     */
     @Override
     public void clearBasket(User user) {
         this.basket.clear();
         notifyUpdate();
     }
 
+    /**
+     * Gets the orders for the given User (must have been sent to Checkout)
+     * @param user user to lookup
+     * @return List of Orders associated with this user
+     */
     @Override
     public List<Order> getOrders(User user) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_ORDERS, user));
@@ -274,6 +310,11 @@ public class ClientApplication implements ClientInterface {
         return new ArrayList<>();
     }
 
+    /**
+     * Finds whether an Order is Complete or Cancelled
+     * @param order order to lookup
+     * @return True if OrderState is COMPLETE or CANCELLED.
+     */
     @Override
     public boolean isOrderComplete(Order order) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
@@ -288,6 +329,11 @@ public class ClientApplication implements ClientInterface {
         return false;
     }
 
+    /**
+     * Gets Status of an Order as a String
+     * @param order order to lookup
+     * @return String status of Order
+     */
     @Override
     public String getOrderStatus(Order order) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_STATUS, order));
@@ -301,6 +347,11 @@ public class ClientApplication implements ClientInterface {
         return "";
     }
 
+    /**
+     * Gets the Double cost of an Order
+     * @param order to lookup
+     * @return Double cost of Order
+     */
     @Override
     public Number getOrderCost(Order order) {
         boolean success = comms.sendMessage(new Message(MessageType.GET_COST, order));
@@ -314,19 +365,33 @@ public class ClientApplication implements ClientInterface {
         return null;
     }
 
+    /**
+     * Sends a cancel request for an Order to the Server
+     * @param order to cancel
+     */
     @Override
     public void cancelOrder(Order order) {
         comms.sendMessage(new Message(MessageType.SEND_CANCEL, order));
         notifyUpdate();
     }
 
+    /**
+     * Adds update listeners
+     * (only actually used by the ServerWindow, but implementation leaves this open for future addition).
+     * @param listener An update listener to be informed of all model changes.
+     */
     @Override
     public void addUpdateListener(UpdateListener listener) {
         this.listeners.add(listener);
     }
 
+    /**
+     * Updates all update listeners for the Client
+     * (only actually used by the ServerWindow, but implementation leaves this open for future addition).
+     */
     @Override
     public void notifyUpdate() {
+        clientWindow.updated(new UpdateEvent());
         for (UpdateListener listener : listeners) {
             listener.updated(new UpdateEvent());
         }

@@ -31,6 +31,9 @@ public class DataPersistence extends Thread {
         this.stockManager = stockManager;
     }
 
+    /**
+     * Thread that runs a backup every 60 seconds of stored object attributes as per specification.
+     */
     @Override
     public void run() {
         while (true) {
@@ -71,6 +74,10 @@ public class DataPersistence extends Thread {
         }
     }
 
+    /**
+     * Counts the number of backups in the folder and returns this amount.
+     * @return numBackups : Integer number of backups in the folder.
+     */
     private int countBackups() {
         File[] filesInFolder = folder.listFiles();
         int numBackups = 0;
@@ -83,6 +90,9 @@ public class DataPersistence extends Thread {
         return numBackups;
     }
 
+    /**
+     * Used to find and remove the oldest backup if there is an excess of backups.
+     */
     private void removeExcessBackup() {
         File oldest = null;
 
@@ -99,6 +109,11 @@ public class DataPersistence extends Thread {
         oldest.delete();
     }
 
+    /**
+     * Used to control the conversion of the object-states into a text representation, then adds all of these to
+     * a single List<String> to later be added to the backup file.
+     * @return : List<String> containing all lines of the backup file.
+     */
     private List<String> parseToStrings() {
         List<String> finalOutput = new ArrayList<>();
         finalOutput.addAll(parseSuppliers());
@@ -113,6 +128,10 @@ public class DataPersistence extends Thread {
         return finalOutput;
     }
 
+    /**
+     * Converts the list of suppliers into a string representation
+     * @return : List<String> containing all lines of the supplier backups
+     */
     private List<String> parseSuppliers() {
         List<String> supplierOutput = new ArrayList<>();
         StringBuilder sb;
@@ -128,6 +147,10 @@ public class DataPersistence extends Thread {
         return supplierOutput;
     }
 
+    /**
+     * Converts the list of ingredients into a string representation
+     * @return : List<String> containing all lines of the ingredient backups
+     */
     private List<String> parseIngredients() {
         List<String> ingredientsOutput = new ArrayList<>();
         StringBuilder sb;
@@ -149,6 +172,10 @@ public class DataPersistence extends Thread {
         return ingredientsOutput;
     }
 
+    /**
+     * Converts the list of dishes into a string representation
+     * @return : List<String> containing all lines of the dish backups
+     */
     private List<String> parseDishes() {
         List<String> dishesOutput = new ArrayList<>();
         StringBuilder sb;
@@ -180,6 +207,10 @@ public class DataPersistence extends Thread {
         return dishesOutput;
     }
 
+    /**
+     * Converts the list of postcodes into a string representation
+     * @return : List<String> containing all lines of the postcode backups
+     */
     private List<String> parsePostcodes() {
         List<String> postcodesOutput = new ArrayList<>();
         StringBuilder sb;
@@ -195,6 +226,10 @@ public class DataPersistence extends Thread {
         return postcodesOutput;
     }
 
+    /**
+     * Converts the list of user accounts into a string representation
+     * @return : List<String> containing all lines of the user backups
+     */
     private List<String> parseUsers() {
         List<String> usersOutput = new ArrayList<>();
         StringBuilder sb;
@@ -214,6 +249,10 @@ public class DataPersistence extends Thread {
         return usersOutput;
     }
 
+    /**
+     * Converts the list of staff into a string representation
+     * @return : List<String> containing all lines of the staff backups
+     */
     private List<String> parseStaff() {
         List<String> staffOutput = new ArrayList<>();
         StringBuilder sb;
@@ -227,6 +266,10 @@ public class DataPersistence extends Thread {
         return staffOutput;
     }
 
+    /**
+     * Converts the list of drones into a string representation
+     * @return : List<String> containing all lines of the drone backups
+     */
     private List<String> parseDrones() {
         List<String> droneOutput = new ArrayList<>();
         StringBuilder sb;
@@ -240,6 +283,10 @@ public class DataPersistence extends Thread {
         return droneOutput;
     }
 
+    /**
+     * Converts the list of Orders into a string representation
+     * @return : List<String> containing all lines of the order backups
+     */
     private List<String> parseOrders() {
         List<String> orderOutput = new ArrayList<>();
         StringBuilder sb;
@@ -262,6 +309,10 @@ public class DataPersistence extends Thread {
         return orderOutput;
     }
 
+    /**
+     * Converts the list of stock into a string representation
+     * @return : List<String> containing all lines of the stock backups
+     */
     private List<String> parseStock() {
         List<String> stockOutput = new ArrayList<>();
         StringBuilder sb;

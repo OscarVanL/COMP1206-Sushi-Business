@@ -1,6 +1,8 @@
 package comms;
 
 import client.ClientInterface;
+import client.ClientWindow;
+import common.UpdateEvent;
 import exceptions.InvalidMessageException;
 
 import java.io.*;
@@ -20,13 +22,18 @@ public class CommsClient extends Thread implements Comms {
     private volatile boolean running = false;
     private boolean newMessage = false;
     private boolean newUpdateNotify = false;
-    private ClientInterface client;
+    private final ClientInterface client;
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Queue<Message> messages = new LinkedList<>();
     private boolean firstMessage = true;
 
+    /**
+     * Accepts a new Server Connection, obtains ObjectInputStream and ObjectOutputStream and sends the client UID (hashCode)
+     * @param client
+     * @param port
+     */
     public CommsClient(ClientInterface client, int port) {
         this.client = client;
 
@@ -62,6 +69,9 @@ public class CommsClient extends Thread implements Comms {
         }
     }
 
+    /**
+     * Runs the thread for receiving new messages from the Server.
+     */
     @Override
     public void run() {
         while (running) {
@@ -76,7 +86,7 @@ public class CommsClient extends Thread implements Comms {
                     socket.close();
                     running = false;
                     firstMessage = true;
-                    //Crash the client since it has no server connection
+                    //Crash the client since it has no server connection and won't recover.
                     System.exit(-1);
                     return;
                 }
@@ -93,8 +103,10 @@ public class CommsClient extends Thread implements Comms {
         }
     }
 
+    /**
+     * Thread for checking for Messages from the Server telling the Client to update
+     */
     private void startServerNotifyCheck() {
-        //Thread that checks for messages from the server telling the client to update.
         new Thread(() -> {
             while (running) {
                 System.out.print("");
@@ -108,6 +120,11 @@ public class CommsClient extends Thread implements Comms {
     }
 
 
+    /**
+     * Sends a message to the Server
+     * @param message : Message object contain the type and payload (if any)
+     * @return : Boolean on whether writeObject could complete without an error.
+     */
     @Override
     public synchronized boolean sendMessage(Message message) {
         if (initialised()) {
@@ -130,6 +147,12 @@ public class CommsClient extends Thread implements Comms {
         return false;
     }
 
+    /**
+     * Sends a message to a specific client UID, but since we are a client already this is ignored and sent to the server
+     * @param uid : Unique ID to send message to (Not relevant)
+     * @param message : Message to be sent
+     * @return
+     */
     @Override
     public synchronized boolean sendMessage(int uid, Message message) {
         //We just call sendMessage and ignore the uid, since only one instance of the server exists, so uid is redundant.
@@ -196,11 +219,19 @@ public class CommsClient extends Thread implements Comms {
         return null;
     }
 
+    /**
+     * Gets whether a new message has arrived from the Server
+     * @return True if a new message has arrived, False if one has not.
+     */
     @Override
     public boolean getMessageStatus() {
         return this.newMessage;
     }
 
+    /**
+     * Returns whether the Comms client has fully started and performed the server handshake.
+     * @return : True of started, False if not.
+     */
     public boolean initialised() {
         return !firstMessage;
     }

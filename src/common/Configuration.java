@@ -22,6 +22,16 @@ public class Configuration {
         this.server = server;
     }
 
+    /**
+     * Parses contents of the configuration file and calls relevant methods to instantiate objects.
+     * @throws FileNotFoundException
+     * @throws InvalidSupplierException
+     * @throws InvalidStockItemException
+     * @throws InvalidIngredientException
+     * @throws InvalidPostcodeException
+     * @throws InvalidUserException
+     * @throws InvalidDishException
+     */
     public void loadConfiguration() throws FileNotFoundException, InvalidSupplierException, InvalidStockItemException, InvalidIngredientException, InvalidPostcodeException, InvalidUserException, InvalidDishException {
         List<String> allLines;
         List<String> supplierLines;

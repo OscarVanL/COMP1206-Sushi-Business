@@ -13,9 +13,9 @@ public class StockItem implements Serializable {
     private boolean isIngredient;
 
     private Model stockedItem;
-    private long amountStocked;
-    private long restockThreshold;
-    private long restockAmount;
+    private Long amountStocked;
+    private Long restockThreshold;
+    private Long restockAmount;
     private boolean beingRestocked = false;
 
     /**
@@ -28,35 +28,38 @@ public class StockItem implements Serializable {
         this.stockedItem = stockItem;
         if (stockItem instanceof Dish) {
             this.isDish = true;
-            this.isIngredient = false;
-            this.amountStocked = (int) stock;
-            this.restockThreshold = restockThreshold.intValue();
-            this.restockAmount = restockAmount.intValue();
+            this.isIngredient = false;;
         } else if (stockItem instanceof Ingredient) {
             this.isIngredient = true;
             this.isDish = false;
-            this.amountStocked = stock;
-            this.restockThreshold = restockThreshold.longValue();
-            this.restockAmount = restockAmount.longValue();
         } else {
             throw new InvalidStockItemException("Non-valid stock item (not common.Dish or common.Ingredient) was used");
         }
+        this.amountStocked = stock;
+        this.restockThreshold = restockThreshold.longValue();
+        this.restockAmount = restockAmount.longValue();
     }
 
+    /**
+     * Gets the Dish or Ingredient that this StockItem is recording stock for.
+     * @return Dish or Ingredient object
+     */
     public Model getStockedItem() {
         return this.stockedItem;
     }
 
+    /**
+     * Adds stock for this Dish/Ingredient
+     * @param stockToAdd : Long amount of stock to add.
+     */
     public void addStock(long stockToAdd) {
-        //If it's a dish, we only allow integer levels of stock
-        if (isDish) {
-            amountStocked += (int) stockToAdd;
-        } else {
-            //For ingredients we allow partial units.
-            amountStocked += stockToAdd;
-        }
+        amountStocked += stockToAdd;
     }
 
+    /**
+     * Removes a number of stock for this Dish/Ingredient
+     * @param stockToRemove : Long amount of stock to remove
+     */
     public void removeStock(long stockToRemove) {
         if (isDish) {
             amountStocked -= (int) stockToRemove;
@@ -65,58 +68,82 @@ public class StockItem implements Serializable {
         }
     }
 
-    public void addRestockAmount() {
-        amountStocked += restockAmount;
-    }
-
+    /**
+     * Sets the number of stock to a specific amount for this Dish/Ingredient
+     * @param stock : Number of stock to set to (later casted to long)
+     */
     public void setStock(Number stock) {
-        //If it's a dish, we only allow integer levels of stock
-        if (isDish) {
-            amountStocked = stock.intValue();
-        }
         amountStocked = stock.longValue();
     }
 
-    public long getStock() {
+    /**
+     * Gets the stock for the stocked Dish/Ingredient
+     * @return :
+     */
+    public Long getStock() {
         return amountStocked;
     }
 
-    public long getRestockThreshold() {
+    /**
+     * Gets the amount that the Stock must fall below before it is restocked
+     * @return : Long amount the stock must fall below before it is restocked
+     */
+    public Long getRestockThreshold() {
         return restockThreshold;
     }
 
+    /**
+     * Sets the threshold for which the Stock must fall below before it is restocked
+     * @param restockThreshold : Amount the stock must fall below before it is restocked.
+     */
     public void setRestockThreshold(Number restockThreshold) {
-        //If it's a dish, we only allow integer restock thresholds
-        if (isDish) {
-            this.restockThreshold = restockThreshold.intValue();
-        }
         this.restockThreshold = restockThreshold.longValue();
     }
 
-    public long getRestockAmount() {
+    /**
+     * Gets the amount to restock by when the stock falls below the Restock Threshold
+     * @return : Long amount to restock by.
+     */
+    public Long getRestockAmount() {
         return restockAmount;
     }
 
+    /**
+     * Sets the amount to restock the Dish/Ingredient by when it falls below the Restock Threshold.
+     * @param restockAmount : Amount to restock by
+     */
     public void setRestockAmount(Number restockAmount) {
-        //If it's a dish, the restock amount must be an integer amount.
-        if (isDish) {
-            this.restockAmount = restockAmount.intValue();
-        }
         this.restockAmount = restockAmount.longValue();
     }
 
+    /**
+     * Returns whether the StockItem is representing a Dish
+     * @return : True if it is, False if it is not
+     */
     public boolean isDish() {
         return isDish;
     }
 
+    /**
+     * Returns whether the StockItem is representing an Ingredient
+     * @return : True if it is, False if it is not.
+     */
     public boolean isIngredient() {
         return isIngredient;
     }
 
+    /**
+     * Sets whether this Ingredient/Dish is currently being restocked
+     * @param beingRestocked : New state of whether dish is being restocked
+     */
     public void setBeingRestocked(boolean beingRestocked) {
         this.beingRestocked = beingRestocked;
     }
 
+    /**
+     * Returns whether this stockitem is currently being restocked.
+     * @return : True - is being restocked. False - is not being restocked
+     */
     public boolean beingRestocked() {
         return this.beingRestocked;
     }

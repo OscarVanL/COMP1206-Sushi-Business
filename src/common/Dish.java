@@ -40,6 +40,10 @@ public class Dish extends Model implements Serializable {
         }
     }
 
+    /**
+     * Removes an ingredient from the Dish
+     * @param ingredient : Ingredient to remove
+     */
     public void removeIngredient(Ingredient ingredient) {
         ingredientAmounts.remove(ingredient);
     }
@@ -82,10 +86,19 @@ public class Dish extends Model implements Serializable {
         return ingredientAmounts.get(ingredient);
     }
 
+    /**
+     * Returns the description assigned to this dish
+     * @return String : Dish description
+     */
     public String getDishDescription() {
         return this.dishDescription;
     }
 
+    /**
+     * Used to determine if a Dish contains an ingredient
+     * @param ingredient : Ingredient to check if present in Dish
+     * @return : True if present, False if not.
+     */
     public boolean containsIngredient(Ingredient ingredient) {
         if (ingredientAmounts.containsKey(ingredient)) {
             return true;
@@ -102,6 +115,10 @@ public class Dish extends Model implements Serializable {
         return ingredientAmounts.keySet();
     }
 
+    /**
+     * Re-sets the Dish recipe from one as argument stored in a Map.
+     * @param newRecipe : Recipe to replace the existing recipe with.
+     */
     public void setRecipe(Map<Ingredient, Number> newRecipe) {
         HashMap<Ingredient, Long> newRecipeCasted = new HashMap<>();
         for (Map.Entry<Ingredient, Number> newRecipeIngredient : newRecipe.entrySet()) {
@@ -110,6 +127,10 @@ public class Dish extends Model implements Serializable {
         ingredientAmounts = newRecipeCasted;
     }
 
+    /**
+     * Gets a Map detailing the recipe for this Dish
+     * @return : Map<Ingredient, Number> showing the recipe for this dish
+     */
     public Map<Ingredient, Number> getRecipe() {
         Map<Ingredient, Number> recipe = new HashMap<>();
         for (Map.Entry<Ingredient, Long> dishIngredients : ingredientAmounts.entrySet()) {
@@ -118,6 +139,10 @@ public class Dish extends Model implements Serializable {
         return recipe;
     }
 
+    /**
+     * Returns the restock threshold for this dish
+     * @return : Restock threshold
+     */
     public Long getRestockThreshold() {
         try {
             return stockManager.getRestockThreshold(this);
@@ -127,6 +152,10 @@ public class Dish extends Model implements Serializable {
         return null;
     }
 
+    /**
+     * Returns the amount to restock by when restocking this dish
+     * @return : Restock amount
+     */
     public Long getRestockAmount() {
         try {
             return stockManager.getRestockAmount(this);
@@ -136,6 +165,10 @@ public class Dish extends Model implements Serializable {
         return null;
     }
 
+    /**
+     * Returns the dish's name
+     * @return : String representation of dish's name.
+     */
     @Override
     public String getName() {
         return this.dishName;

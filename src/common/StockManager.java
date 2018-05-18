@@ -33,6 +33,8 @@ public class StockManager implements Serializable {
 
     /**
      * Used for adding a new dish, or adding more prepared dishes to the prepared dishes stock
+     * @param toAdd : Dish to add to the StockManager
+     * @param amountToAdd : Amount of the Dish is already prepared.
      */
     public void addDish(Dish toAdd, int amountToAdd) {
         //There are already some of this dish prepared, so add to the number in stock
@@ -50,18 +52,36 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Used for adding a new dish to the prepared dish stock.
+     * @param toAdd : Dish to add
+     * @param stockData : StockItem for this dish
+     */
     public void addDish(Dish toAdd, StockItem stockData) {
         dishStock.put(toAdd, stockData);
     }
 
+    /**
+     * Used for removing a dish from the prepared dishes stock.
+     * @param toRemove : Dish to remove
+     */
     public void removeDish(Dish toRemove) {
         dishStock.remove(toRemove);
     }
 
+    /**
+     * Used to add many dishes and StockItems at once to the prepared dish stock
+     * @param dishesToAdd : Dishes to add to the prepared dish stock.
+     */
     public void addDishes(HashMap<Dish, StockItem> dishesToAdd) {
         dishStock.putAll(dishesToAdd);
     }
 
+    /**
+     * Used to add an ingredient to the ingredient stock manager
+     * @param toAdd : Ingredient to add
+     * @param unitsToAdd : Units stocked
+     */
     public void addIngredient(Ingredient toAdd, long unitsToAdd) {
         if (ingredientStock.containsKey(toAdd)) {
             ingredientStock.get(toAdd).addStock(unitsToAdd);
@@ -77,19 +97,38 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Used to add an ingredient and the StockItem to the ingredient stock manager
+     * @param toAdd : Ingredient to add
+     * @param stockData : StockItem for this ingredient
+     */
     public void addIngredient(Ingredient toAdd, StockItem stockData) {
         ingredientStock.put(toAdd, stockData);
     }
 
+    /**
+     * Removes an ingredient from the ingredient stock manager
+     * @param toRemove : Ingredient to remove
+     */
     public void removeIngredient(Ingredient toRemove) {
         ingredientStock.remove(toRemove);
     }
 
+    /**
+     * Used to add many ingredients at once to the ingredient stock manager
+     * @param ingredientsToAdd : Map containing Ingredient and StockItem to add to the stock manager.
+     */
     public void addIngredients(HashMap<Ingredient, StockItem> ingredientsToAdd) {
         ingredientStock.putAll(ingredientsToAdd);
     }
 
-    public long getStockLevel(Model model) throws InvalidStockItemException {
+    /**
+     * Gets the stock levels for a Dish or Ingredient
+     * @param model : Dish or ingredient to check
+     * @return : Long value of stock held on this Dish or Ingredient
+     * @throws InvalidStockItemException : If a model that is not Dish or Ingredient is passed in.
+     */
+    public Long getStockLevel(Model model) throws InvalidStockItemException {
         if (model instanceof Dish) {
             return dishStock.get(model).getStock();
         } else if (model instanceof Ingredient) {
@@ -99,6 +138,12 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Sets the stock level for a given Dish or Ingredient
+     * @param model : Dish or Ingredient to update
+     * @param stockLevel : New stock level of this dish/ingredient
+     * @throws InvalidStockItemException : If a model that is not Dish or Ingredient is passed in.
+     */
     public void setStockLevel(Model model, Number stockLevel) throws InvalidStockItemException {
         if (model instanceof Dish) {
             dishStock.get(model).setStock(stockLevel);
@@ -122,7 +167,13 @@ public class StockManager implements Serializable {
         }
     }
 
-    public long getRestockThreshold(Model model) throws InvalidStockItemException {
+    /**
+     * Gets the threshold that the stock must reach before it is restocked
+     * @param model : Dish or Ingredient to check
+     * @return : Long value of the amount of stock
+     * @throws InvalidStockItemException : Thrown if a Model that is not Dish or Ingredient is passed in
+     */
+    public Long getRestockThreshold(Model model) throws InvalidStockItemException {
         if (model instanceof Dish) {
             return dishStock.get(model).getRestockThreshold();
         } else if (model instanceof Ingredient) {
@@ -132,6 +183,12 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Sets the threshold the stock must reach before it is restocked
+     * @param model : Dish or Ingredient to check
+     * @param restockThreshold : Level at which to restock
+     * @throws InvalidStockItemException : Thrown if a Model that is not Dish or Ingredient is passed in.
+     */
     public void setRestockThreshold(Model model, Number restockThreshold) throws InvalidStockItemException {
         if (model instanceof Dish) {
             dishStock.get(model).setRestockThreshold(restockThreshold);
@@ -142,6 +199,12 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Sets the amount to restock by
+     * @param model : Dish or Ingredient to restock
+     * @param restockAmount : Amount to restock by
+     * @throws InvalidStockItemException : Thrown if a model that is not Dish or Ingredient is passed in
+     */
     public void setRestockAmount(Model model, Number restockAmount) throws InvalidStockItemException {
         if (model instanceof Dish) {
             dishStock.get(model).setRestockAmount(restockAmount);
@@ -152,7 +215,13 @@ public class StockManager implements Serializable {
         }
     }
 
-    public long getRestockAmount(Model model) throws InvalidStockItemException {
+    /**
+     * Sets the amount to restock by
+     * @param model : Dish or Ingredient to restock
+     * @return : Amount to restock by
+     * @throws InvalidStockItemException : Thrown if a model that is not Dish or Ingredient is passed in
+     */
+    public Long getRestockAmount(Model model) throws InvalidStockItemException {
         if (model instanceof Dish) {
             return dishStock.get(model).getRestockAmount();
         } else if (model instanceof Ingredient) {
@@ -162,6 +231,10 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Gets a list of StockItem representing all items of stock
+     * @return : List of all StockItems
+     */
     public List<StockItem> getStock() {
         List<StockItem> allStock = new ArrayList<>();
         allStock.addAll(dishStock.values());
@@ -222,7 +295,7 @@ public class StockManager implements Serializable {
      * @return boolean: True if chef can make the quantity with the ingredients available, False if not.
      */
     public boolean canMakeMinQuantity(Dish dish) {
-        int dishesToMake = (int) dishStock.get(dish).getRestockAmount();
+        int dishesToMake = dishStock.get(dish).getRestockAmount().intValue();
         boolean canMake = true;
         //Iterate through every ingredient required to make the dish
         for (Ingredient ingredient : dish.getDishIngredients()) {
@@ -267,6 +340,12 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Used by the Drones to restock an ingredient. Holds the drone's thread by the amount it takes to fly to the supplier and fetch the ingredients
+     * @param ingredient : Ingredient to restock
+     * @param flyingSpeed : Speed the drone flies at
+     * @throws InterruptedException : Thrown if the drone's trip is interrupted
+     */
     public void restockIngredient(Ingredient ingredient, int flyingSpeed) throws InterruptedException {
         if (ingredient != null) {
             StockItem ingredientData = ingredientStock.get(ingredient);
@@ -286,10 +365,20 @@ public class StockManager implements Serializable {
         }
     }
 
+    /**
+     * Gets the StockItem for a given Ingredient
+     * @param ingredient : Ingredient to retrieve StockItem for
+     * @return : StockItem for the ingredient
+     */
     public StockItem getStockItem(Ingredient ingredient) {
         return ingredientStock.get(ingredient);
     }
 
+    /**
+     * Gets the StockItem for a given Dish
+     * @param dish : Dish to retrieve StockItem for
+     * @return : StockItem for the dish
+     */
     public StockItem getStockItem(Dish dish) {
         return dishStock.get(dish);
     }

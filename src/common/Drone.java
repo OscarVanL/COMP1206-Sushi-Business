@@ -69,15 +69,27 @@ public class Drone extends Model implements Runnable {
         }
     }
 
+    /**
+     * Returns the current DroneState of the drone
+     * @return : DroneState enum element representing drone state.
+     */
     public DroneState getJobState() {
         return this.jobState;
     }
 
+    /**
+     * Sets the current DroneState of the drone
+     * @param state : State to set
+     */
     private void setDroneState(DroneState state) {
         notifyUpdate("drone state", this.jobState, state);
         this.jobState = state;
     }
 
+    /**
+     * Returns a string representation of the drone's current job
+     * @return : String representing current job
+     */
     private String jobSummary() {
         if (this.jobState == DroneState.IDLE) {
             return "Idle";
@@ -90,20 +102,35 @@ public class Drone extends Model implements Runnable {
         }
     }
 
+    /**
+     * Gets the flying speed of the drone
+     * @return : Integer speed of the drone
+     */
     public int getSpeed() {
         return this.flyingSpeed;
     }
 
+    /**
+     * Gets the drone's job as a string
+     * @return String : Drone's current job summary
+     */
     @Override
     public String toString() {
         return jobSummary();
     }
 
+    /**
+     * Gets the drone's name ("Drone X").
+     * @return String representation of drone name
+     */
     @Override
     public String getName() {
         return this.droneName;
     }
 
+    /**
+     * Used to stop the drone when a new configuration is loaded.
+     */
     public void cancelThread() {
         this.threadRunning = false;
     }

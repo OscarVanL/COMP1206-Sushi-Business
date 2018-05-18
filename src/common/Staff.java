@@ -27,6 +27,11 @@ public class Staff extends Model implements Runnable {
         this.orders = orders;
     }
 
+    /**
+     * Performs Thread-based Staff operations including:
+     * 1. Finding dishes that fall below the restock threshold and restocking them
+     * 2. Checking if there are enough dishes to together complete an order
+     */
     @Override
     public void run() {
         Dish toRestock;
@@ -105,6 +110,9 @@ public class Staff extends Model implements Runnable {
         return null;
     }
 
+    /**
+     * Performs checks on all orders being prepared if there are enough its Dishes for it to be finished preparing.
+     */
     private void checkOrderComplete() {
         //Goes through orders, if there are enough of a stocked dish then its state is updated, otherwise it is cooked.
         for (Order order : orders) {
@@ -133,21 +141,37 @@ public class Staff extends Model implements Runnable {
         }
     }
 
+    /**
+     * Returns the current job summary of the staff member as a string
+     * @return : Job summary
+     */
     @Override
     public String toString() {
         return jobSummary();
     }
 
+    /**
+     * Returns the name of the staff member
+     * @return : Name of staff member
+     */
     @Override
     public String getName() {
         return this.staffName;
     }
 
+    /**
+     * Gets the current job of the staff member as a StaffState Enum value
+     * @return StaffState representing current staff member job
+     */
     public StaffState getJobState() {
         return this.jobState;
     }
 
-    public String jobSummary() {
+    /**
+     * Gets the current job of the staff member as a String
+     * @return : String job summary
+     */
+    private String jobSummary() {
         if (this.jobState == StaffState.COOKING) {
             return "Cooking: " + currentlyMaking;
         } else if (this.jobState == StaffState.IDLE) {
@@ -157,6 +181,9 @@ public class Staff extends Model implements Runnable {
         }
     }
 
+    /**
+     * Cancels this thread in the circumstance where a new Configuration file is loaded by the server
+     */
     public void cancelThread() {
         this.threadRunning = false;
     }

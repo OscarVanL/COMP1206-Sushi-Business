@@ -6,7 +6,6 @@ import java.io.Serializable;
  * @author Oscar van Leusen
  */
 public class Postcode extends Model implements Serializable {
-    private boolean deleteSafe = true;
     private String postcode;
     private Long distance;
 
@@ -25,25 +24,13 @@ public class Postcode extends Model implements Serializable {
         return this.distance;
     }
 
-    public void setDeletable(boolean deletable) {
-        this.deleteSafe = deletable;
-
-    }
-
-    public boolean isDeleteSafe() {
-        return deleteSafe;
-    }
-
-    @Override
-    public String toString() {
-        return "Postcode: " + postcode;
-    }
-
-
+    /**
+     * Gets the postcode as String
+     * @return : String containing the postcode represented by this object
+     */
     @Override
     public String getName() {
         return this.postcode;
     }
-
 
 }

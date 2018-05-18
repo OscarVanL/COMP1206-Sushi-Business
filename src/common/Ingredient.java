@@ -21,11 +21,19 @@ public class Ingredient extends Model implements Serializable {
         this.stockManager = stockManager;
     }
 
+    /**
+     * Gets the name of the ingredient
+     * @return String : name of ingredient
+     */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * Sets the name of the ingredient
+     * @param name : New name of ingredient
+     */
     @Override
     public void setName(String name) {
         notifyUpdate("name", this.name, name);
@@ -58,10 +66,18 @@ public class Ingredient extends Model implements Serializable {
         this.supplier = newSupplier;
     }
 
+    /**
+     * Gets the unit this ingredient is measured in
+     * @return String representation of the unit this ingredient is measured in.
+     */
     public String getUnit() {
         return this.measurementUnit;
     }
 
+    /**
+     * Gets the Restock Threshold of this dish (The point to which the stock must fall before it is restocked)
+     * @return : Long of the restock threshold.
+     */
     public Long getRestockThreshold() {
         try {
             return stockManager.getRestockThreshold(this);
@@ -71,6 +87,10 @@ public class Ingredient extends Model implements Serializable {
         return null;
     }
 
+    /**
+     * Gets the Restock Amount of this dish (The amount of the dish that is restocked when it is restocked)
+     * @return : Long of the Restock Amount
+     */
     public Long getRestockAmount() {
         try {
             return stockManager.getRestockAmount(this);

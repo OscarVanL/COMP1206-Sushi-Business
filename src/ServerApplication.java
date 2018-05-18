@@ -18,6 +18,7 @@ import java.util.Map;
  */
 public class ServerApplication extends Thread implements ServerInterface {
 
+    private static volatile boolean running = true;
     private static Thread commsThread = null;
     private ServerWindow serverWindow;
     private Configuration config;
@@ -45,7 +46,9 @@ public class ServerApplication extends Thread implements ServerInterface {
         app.serverWindow = app.launchGUI(serverInterface);
     }
 
-    private static boolean running = true;
+    /**
+     * Used to constantly receive messages from Clients and process these for the Server response.
+     */
     @Override
     public void run() {
         while (running) {
@@ -63,29 +66,37 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+    /**
+     * Initialises the Server Application and loads the default Configuration Example
+     * @return ServerInterface used for launching GUI later
+     */
     private static ServerInterface initialise() {
         ServerApplication app = new ServerApplication();
-        try {
-            app.loadConfiguration("ConfigurationExample.txt");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        app.loadConfiguration("ConfigurationExample.txt");
         return app;
     }
 
+    /**
+     * Launches the Server GUI
+     * @param serverInterface : ServerInterface to launch GUI from
+     * @return : ServerWindow
+     */
     ServerWindow launchGUI(ServerInterface serverInterface) {
         ServerWindow window = new ServerWindow(serverInterface);
         this.serverWindow = window;
         return window;
     }
 
-    private static void startComms(ServerApplication app) {
+    /**
+     * Starts the Comms Server and background message receiving thread.
+     */
+    private void startComms() {
         try {
             commsThread = new CommsServer(5000);
             communication = (CommsServer) commsThread;
             commsThread.start();
             running = true;
-            app.start();
+            this.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,7 +109,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      * @throws FileNotFoundException Exception thrown if the file is not found.
      */
     @Override
-    public void loadConfiguration(String filename) throws FileNotFoundException {
+    public void loadConfiguration(String filename) {
         //Before loading our configuration, close any existing threads and empty any stored values.
         for (Staff staffMember : staff.keySet()) {
             staffMember.cancelThread();
@@ -124,7 +135,7 @@ public class ServerApplication extends Thread implements ServerInterface {
         if (communication != null) {
             communication.dropConnections();
         } else {
-            startComms(this);
+            startComms();
         }
 
         try {
@@ -142,17 +153,31 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+
+    /**
+     * Enables/disables restocking of Ingredients
+     * @param enabled set to true to enable restocking of ingredients, or false to disable.
+     */
     @Override
     public void setRestockingIngredientsEnabled(boolean enabled) {
         this.ingredientsRestocked = enabled;
     }
 
+    /**
+     * Enables/disables restocking of Dishes
+     * @param enabled set to true to enable restocking of dishes, or false to disable.
+     */
     @Override
     public void setRestockingDishesEnabled(boolean enabled) {
         this.dishesRestocked = enabled;
 
     }
 
+    /**
+     * Sets the stock levels of a specific Dish
+     * @param dish dish to set the stock
+     * @param stock stock amount
+     */
     @Override
     public void setStock(Dish dish, Number stock) {
         try {
@@ -163,6 +188,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Sets the Stock of a specific Ingredient
+     * @param ingredient ingredient to set the stock
+     * @param stock stock amount
+     */
     @Override
     public void setStock(Ingredient ingredient, Number stock) {
         try {
@@ -173,11 +203,24 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Gets the List of Dishes stored on the Server
+     * @return List of Dishes
+     */
     @Override
     public List<Dish> getDishes() {
-        return dishes;
+        return this.dishes;
     }
 
+    /**
+     * Adds a Dish to the Server
+     * @param name name of dish
+     * @param description description of dish
+     * @param price price of dish
+     * @param restockThreshold minimum threshold to reach before restocking
+     * @param restockAmount amount to restock by
+     * @return new Dish object
+     */
     @Override
     public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
         Dish newDish = new Dish(name, description, price, stockManager);
@@ -190,10 +233,15 @@ public class ServerApplication extends Thread implements ServerInterface {
             e.printStackTrace();
         }
         notifyUpdate();
-
+        notifyClient();
         return newDish;
     }
 
+    /**
+     * Removes a Dish from the Server
+     * @param dish dish to remove
+     * @throws UnableToDeleteException : If the Dish is in an order
+     */
     @Override
     public void removeDish(Dish dish) throws UnableToDeleteException {
         //Checks to see if the Dish is contained in any Orders
@@ -209,18 +257,34 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyClient();
     }
 
+    /**
+     * Adds a new Ingredient to a Dish
+     * @param dish dish to edit the recipe of
+     * @param ingredient ingredient to add/update
+     * @param quantity quantity to set. Should update and replace, not add to.
+     */
     @Override
     public void addIngredientToDish(Dish dish, Ingredient ingredient, Number quantity) {
         dish.addIngredient(ingredient, quantity);
         notifyUpdate();
     }
 
+    /**
+     * Removes an ingredient from a Dish
+     * @param dish dish to edit the recipe of
+     * @param ingredient ingredient to completely remove
+     */
     @Override
     public void removeIngredientFromDish(Dish dish, Ingredient ingredient) {
         dish.removeIngredient(ingredient);
         notifyUpdate();
     }
 
+    /**
+     * Sets the Recipe of a Dish
+     * @param dish dish to modify the recipe of
+     * @param recipe map of ingredients and quantity numbers to update
+     */
     @Override
     public void setRecipe(Dish dish, Map<Ingredient, Number> recipe) {
         dish.setRecipe(recipe);
@@ -229,6 +293,12 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyClient();
     }
 
+    /**
+     * Sets the amount to restock by when restocking.
+     * @param dish dish to modify the restocking levels of
+     * @param restockThreshold new amount at which to restock
+     * @param restockAmount new amount to restock by when threshold is reached
+     */
     @Override
     public void setRestockLevels(Dish dish, Number restockThreshold, Number restockAmount) {
         try {
@@ -240,6 +310,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Sets the threshold that stock must fall to before the Dish is to be restocked.
+     * @param dish dish to query restock threshold of
+     * @return
+     */
     @Override
     public Number getRestockThreshold(Dish dish) {
         try {
@@ -250,6 +325,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         return null;
     }
 
+    /**
+     * Gets the amount that is restocked when a Dish's stock falls below the Retstock Threshold
+     * @param dish dish to query restock amount of
+     * @return Number to restock by
+     */
     @Override
     public Number getRestockAmount(Dish dish) {
         try {
@@ -260,21 +340,43 @@ public class ServerApplication extends Thread implements ServerInterface {
         return null;
     }
 
+    /**
+     * Gets the recipe of a Dish
+     * @param dish dish to query the recipe of
+     * @return Map of Ingredient to Number (quantity/amount)
+     */
     @Override
     public Map<Ingredient, Number> getRecipe(Dish dish) {
         return dish.getRecipe();
     }
 
+    /**
+     * Gets the levels of stock of all Dishes
+     * @return Map of Dish to Number in Stock
+     */
     @Override
     public Map<Dish, Number> getDishStockLevels() {
         return stockManager.getDishStockLevels();
     }
 
+    /**
+     * Gets a list of all Ingredients
+     * @return List of all Ingredients
+     */
     @Override
     public List<Ingredient> getIngredients() {
         return ingredients;
     }
 
+    /**
+     * Adds a new Ingredient
+     * @param name name
+     * @param unit unit
+     * @param supplier supplier
+     * @param restockThreshold when amount reaches restockThreshold restock
+     * @param restockAmount when threshold is reached, restock with this amount
+     * @return Ingredient added
+     */
     @Override
     public Ingredient addIngredient(String name, String unit, Supplier supplier, Number restockThreshold, Number restockAmount) {
         Ingredient newIngredient  = new Ingredient(name, unit, supplier, stockManager);
@@ -290,6 +392,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         return newIngredient;
     }
 
+    /**
+     * Removes an Ingredient
+     * @param ingredient ingredient to remove
+     * @throws UnableToDeleteException
+     */
     @Override
     public void removeIngredient(Ingredient ingredient) throws UnableToDeleteException {
         //Checks that the ingredient is not still used in any dish.
@@ -308,6 +415,12 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Sets the restock levels for an Ingredient
+     * @param ingredient ingredient to modify the restocking levels of
+     * @param restockThreshold new amount at which to restock
+     * @param restockAmount new amount to restock by when threshold is reached
+     */
     @Override
     public void setRestockLevels(Ingredient ingredient, Number restockThreshold, Number restockAmount) {
         try {
@@ -319,6 +432,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Gets the restock threshold for an Ingredient
+     * @param ingredient ingredient to query restock threshold of
+     * @return Restock Threshold value
+     */
     @Override
     public Number getRestockThreshold(Ingredient ingredient) {
         try {
@@ -329,6 +447,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         return null;
     }
 
+    /**
+     * Gets the Restock Amount for an Ingredient
+     * @param ingredient ingredient to query restock amount of
+     * @return Restock Amount value
+     */
     @Override
     public Number getRestockAmount(Ingredient ingredient) {
         try {
@@ -339,16 +462,30 @@ public class ServerApplication extends Thread implements ServerInterface {
         return null;
     }
 
+    /**
+     * Get the stock levels for all Ingredients
+     * @return : Map of Ingredient to Stock number
+     */
     @Override
     public Map<Ingredient, Number> getIngredientStockLevels() {
         return stockManager.getIngredientStockLevels();
     }
 
+    /**
+     * Gets a List of all Suppliers
+     * @return List of all Suppliers
+     */
     @Override
     public List<Supplier> getSuppliers() {
         return suppliers;
     }
 
+    /**
+     * Adds a new Supplier to the list of Suppliers
+     * @param name name of supplier
+     * @param distance from restaurant
+     * @return : New supplier Object
+     */
     @Override
     public Supplier addSupplier(String name, Number distance) {
         Supplier newSupplier = new Supplier(name, distance);
@@ -357,6 +494,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         return newSupplier;
     }
 
+    /**
+     * Attempts to remove a Supplier
+     * @param supplier supplier to remove
+     * @throws UnableToDeleteException : Exception thrown if the Supplier is a supplier to any of the Ingredients in the Restaurant
+     */
     @Override
     public void removeSupplier(Supplier supplier) throws UnableToDeleteException {
         //See if any ingredient uses this supplier, if it does, throw an UnableToDeleteException
@@ -370,17 +512,31 @@ public class ServerApplication extends Thread implements ServerInterface {
         notifyUpdate();
     }
 
+    /**
+     * Gets the distance a Supplier is away from the restaurant
+     * @param supplier supplier to query
+     * @return Distance from Restaurant
+     */
     @Override
     public Number getSupplierDistance(Supplier supplier) {
         return supplier.getDistance();
     }
 
+    /**
+     * Gets a List of all the Drones
+     * @return List of all the Drones
+     */
     @Override
     public List<Drone> getDrones() {
         List<Drone> droneList = new ArrayList<>(drones.keySet());
         return droneList;
     }
 
+    /**
+     * Adds a new Drone to the restaurant
+     * @param speed speed of drone
+     * @return : Drone Object just added
+     */
     @Override
     public Drone addDrone(Number speed) {
         Drone newDrone = new Drone(speed, stockManager, orders, drones.size() + 1);
@@ -391,28 +547,56 @@ public class ServerApplication extends Thread implements ServerInterface {
         return newDrone;
     }
 
+    /**
+     * Removes a Drone from the restaurant
+     * @param drone drone to remove
+     * @throws UnableToDeleteException : Throws exception if the Drone is currently busy with a job.
+     */
     @Override
     public void removeDrone(Drone drone) throws UnableToDeleteException {
-        drones.remove(drone);
-        notifyUpdate();
+        if (drone.getJobState() == Drone.DroneState.IDLE) {
+            drones.remove(drone);
+            notifyUpdate();
+        } else {
+            throw new UnableToDeleteException("Attempted to Delete Drone while it is busy with a job.");
+        }
     }
 
+    /**
+     * Gets the speed that a Drone can travel at
+     * @param drone drone to query
+     * @return Drone speed number
+     */
     @Override
     public Number getDroneSpeed(Drone drone) {
         return drone.getSpeed();
     }
 
+    /**
+     * Gets the Status of the Drone as a String
+     * @param drone drone to query
+     * @return Drone Status
+     */
     @Override
     public String getDroneStatus(Drone drone) {
         return drone.toString();
     }
 
+    /**
+     * Gets a list of Staff working for the restaurant
+     * @return : List of Staff
+     */
     @Override
     public List<Staff> getStaff() {
         List<Staff> staffList = new ArrayList<>(staff.keySet());
         return staffList;
     }
 
+    /**
+     * Adds a staff member to the restaurant
+     * @param name name of staff member
+     * @return Staff Member Object
+     */
     @Override
     public Staff addStaff(String name) {
         Staff newStaff = new Staff(name, stockManager, orders);
@@ -423,6 +607,11 @@ public class ServerApplication extends Thread implements ServerInterface {
         return newStaff;
     }
 
+    /**
+     * Removes the Staff Member from the restaurant
+     * @param staff staff member to remove
+     * @throws UnableToDeleteException : Thrown if the Staff Member is busy with a job.
+     */
     @Override
     public void removeStaff(Staff staff) throws UnableToDeleteException {
         if (staff.getJobState() == Staff.StaffState.IDLE) {
@@ -434,16 +623,30 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     }
 
+    /**
+     * Gets the current Job of the Staff Member
+     * @param staff member to query
+     * @return String representation of staff member's job
+     */
     @Override
     public String getStaffStatus(Staff staff) {
         return staff.toString();
     }
 
+    /**
+     * Gets a list of Orders
+     * @return List of Orders
+     */
     @Override
     public List<Order> getOrders() {
         return orders;
     }
 
+    /**
+     * Removes an order from the Application
+     * @param order order to remove
+     * @throws UnableToDeleteException Exception thrown if the order is not cancelled or complete yet.
+     */
     @Override
     public void removeOrder(Order order) throws UnableToDeleteException {
         if (order.getOrderState() == Order.OrderState.CANCELLED || order.getOrderState() == Order.OrderState.COMPLETE) {
@@ -455,16 +658,31 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     }
 
+    /**
+     * Gets the distance needed to be travelled by the Drone to deliver the order
+     * @param order order to query
+     * @return Distance needed to be travelled
+     */
     @Override
     public Number getOrderDistance(Order order) {
         return order.getUser().getPostcode().getDistance();
     }
 
+    /**
+     * Return whether the Order is Complete
+     * @param order order to query
+     * @return True if Complete, False if not.
+     */
     @Override
     public boolean isOrderComplete(Order order) {
         return order.getOrderState() == Order.OrderState.COMPLETE;
     }
 
+    /**
+     * Gets a String representation of the Order's status
+     * @param order order to query
+     * @return String order status
+     */
     @Override
     public String getOrderStatus(Order order) {
         if (order == null) {
@@ -488,36 +706,69 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+    /**
+     * Gets then cost of the Order
+     * @param order order to query
+     * @return Cost of Order
+     */
     @Override
     public Number getOrderCost(Order order) {
         return order.orderPrice();
     }
 
+    /**
+     * Gets the list of Postcodes
+     * @return : List of postcodes
+     */
     @Override
     public List<Postcode> getPostcodes() {
         return postcodes;
     }
 
+    /**
+     * Adds a postcode to the deliverable postcodes for the restaurant
+     * @param code postcode string representation
+     * @param distance distance from the restaurant
+     */
     @Override
     public void addPostcode(String code, Number distance) {
         postcodes.add(new Postcode(code, distance));
         notifyUpdate();
     }
 
+    /**
+     * Removes a postcode from the deliverable postcodes for the restaurant
+     * @param postcode postcode to remove
+     * @throws UnableToDeleteException : Exception thrown if the postcode is already used in a User's address details.
+     */
     @Override
     public void removePostcode(Postcode postcode) throws UnableToDeleteException {
-        if (postcode.isDeleteSafe()) {
-            postcodes.remove(postcode);
-        } else throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
+        for (User user : users) {
+            if (user.getPostcode().getName().equals(postcode.getName())) {
+                throw new UnableToDeleteException("Attempted to delete Postcode while not safe to delete Postcode");
+            }
+        }
+        postcodes.remove(postcode);
         notifyUpdate();
     }
 
+    /**
+     * Returns the List of Users registered
+     * @return List of Users
+     */
     @Override
     public List<User> getUsers() {
-
         return this.users;
     }
 
+    /**
+     * Registers/adds a User to the restaurant
+     * @param username : Username of new user
+     * @param password : Password of new user
+     * @param location : Location of new User
+     * @param postcode : Postcode of new User
+     * @return Instance of new User
+     */
     public User addUser(String username, String password, String location, Postcode postcode) {
         User newUser = new User(username, password, location, postcode);
         users.add(newUser);
@@ -525,66 +776,60 @@ public class ServerApplication extends Thread implements ServerInterface {
         return newUser;
     }
 
+    /**
+     * Removes a user from the restaurant.
+     * @param user to remove
+     * @throws UnableToDeleteException
+     */
     @Override
     public void removeUser(User user) throws UnableToDeleteException {
-        if (user.isDeleteSafe()) {
-            users.remove(user);
-        } else {
-            throw new UnableToDeleteException("Attempted to delete User while not safe to delete user.");
+        for (Order order : orders) {
+            if (order.getUser().equals(user)) {
+                throw new UnableToDeleteException("Attempted to delete User while not safe to delete user.");
+            }
         }
+        users.remove(user);
         notifyUpdate();
     }
 
+    /**
+     * Processes received Messages by finding their type and calling the relevant method to deal with it.
+     * @param message Message received from Client.
+     */
     private void processMessage(Message message) {
         MessageType type = message.getType();
 
         if (type == MessageType.REGISTER) {
-            System.out.println("Message Type: REGISTER");
             processRegister(message);
         } else if (type == MessageType.LOGIN) {
-            System.out.println("Message Type: LOGIN");
             processLogin(message);
         } else if (type == MessageType.GET_POSTCODES) {
-            System.out.println("Message Type: GET_POSTCODES");
             processGetPostcodes(message);
         } else if (type == MessageType.GET_DISHES) {
-            System.out.println("Message Type: GET_DISHES");
             processGetDishes(message);
         } else if (type == MessageType.GET_DISH_DESC) {
-            System.out.println("Message Type: GET_DISH_DESC");
             processGetDishDesc(message);
         } else if (type == MessageType.GET_DISH_PRICE) {
-            System.out.println("Message Type: GET_DISH_PRICE");
             processGetDishPrice(message);
         } else if (type == MessageType.GET_BASKET) {
-            System.out.println("Message Type: GET_BASKET");
             processGetBasket(message);
         } else if (type == MessageType.GET_BASKET_COST) {
-            System.out.println("Message Type: GET_BASKET_COST");
             processGetBasketCost(message);
         } else if (type == MessageType.GET_ORDERS) {
-            System.out.println("Message Type: GET_ORDERS");
             processGetOrders(message);
         } else if (type == MessageType.GET_STATUS) {
-            System.out.println("Message Type: GET_STATUS");
             processGetOrderStatus(message);
         } else if (type == MessageType.GET_COST) {
-            System.out.println("Message Type: GET_COST");
             processGetOrderCost(message);
         } else if (type == MessageType.ADD_DISH) {
-            System.out.println("Message Type: SEND_DISH");
             processAddDishToBasket(message);
         } else if (type == MessageType.UPDATE_DISH) {
-            System.out.println("Message Type: UPDATE_DISH");
             processUpdateDishInBasket(message);
         } else if (type == MessageType.SEND_CHECKOUT) {
-            System.out.println("Message Type: SEND_CHECKOUT");
             processUserCheckout(message);
         } else if (type == MessageType.SEND_CLEAR) {
-            System.out.println("Message Type: SEND_CLEAR");
             processBasketClear(message);
         } else if (type == MessageType.SEND_CANCEL) {
-            System.out.println("Message Type: SEND_CANCEL");
             processOrderCancel(message);
         }
     }
@@ -997,11 +1242,18 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+    /**
+     * Adds listener to be updated when notifyUpdate() is called
+     * @param listener An update listener to be informed of all model changes.
+     */
     @Override
     public void addUpdateListener(UpdateListener listener) {
         this.listeners.add(listener);
     }
 
+    /**
+     * Called when a model is changed to inform all models of this change so they can update.
+     */
     @Override
     public void notifyUpdate() {
         for (UpdateListener listener : listeners) {
@@ -1009,6 +1261,10 @@ public class ServerApplication extends Thread implements ServerInterface {
         }
     }
 
+    /**
+     * Sends a server message telling the Client to update. Called after a change on the server is made such as
+     * adding a new Dish to the restaurant.
+     */
     public void notifyClient() {
         if (communication != null) {
             communication.sendMessage(new Message(MessageType.UPDATE));

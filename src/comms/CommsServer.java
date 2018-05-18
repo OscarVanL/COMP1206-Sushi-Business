@@ -5,12 +5,11 @@ import exceptions.InvalidMessageException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Tutorial used for implementation of Thread-based socket communication (although many aspects are changed from this):
+ * Tutorial used for implementation of Thread-based socket communication (although most aspects are changed from this):
  * https://www.geeksforgeeks.org/introducing-threads-socket-programming-java/
  * @author Oscar van Leusen
  */
@@ -26,6 +25,10 @@ public class CommsServer extends Thread implements Comms {
         serverSocket = new ServerSocket(port);
     }
 
+
+    /**
+     * Starts the Thread that accepts any new client connections and and then gives that client connection itself a new thread.
+     */
     @Override
     public void run() {
         while (running) {
@@ -142,15 +145,27 @@ public class CommsServer extends Thread implements Comms {
         return null;
     }
 
+    /**
+     * Returns whether there is a new message.
+     * @return true : There is a new message, False : There is no new message
+     */
     @Override
     public boolean getMessageStatus() {
         return newMessage;
     }
 
+    /**
+     * Sets whether there is a new message (set to false once the message has been read)
+     * @param newMessage : State of message status.
+     */
     public void setMessageStatus(boolean newMessage) {
         this.newMessage = newMessage;
     }
 
+    /**
+     * Used to drop all connections with clients when loading a new config file.
+     * These clients will automatically close when the connection is lost.
+     */
     public void dropConnections() {
         this.running = false;
         try {

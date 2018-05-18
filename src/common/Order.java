@@ -30,6 +30,11 @@ public class Order extends Model implements Serializable {
         this.state = BASKET;
     }
 
+    /**
+     * Adds a dish (and quantity of dish) to the order
+     * @param dish : Dish to add to the order
+     * @param quantity : Number of dishes to add
+     */
     public void addDish(Dish dish, int quantity) {
         //If we already had this item in our basket, update the quantity in the basket.
         if (basket.containsKey(dish)) {
@@ -42,12 +47,21 @@ public class Order extends Model implements Serializable {
         calculatePrice();
     }
 
+    /**
+     * Adds multiple dishes an quantities to this this order.
+     * @param order : HashMap containing Dishes and number of dishes to add.
+     */
     public void addDishes(HashMap<Dish, Number> order) {
         basket.putAll(order);
         calculatePrice();
         notifyUpdate();
     }
 
+    /**
+     * Updates the amount of a dish in the basket
+     * @param dish : Dish to update
+     * @param newQuantity : New amount of this dish to have in the basket.
+     */
     public void updateDishQuantity(Dish dish, int newQuantity) {
         if (basket.containsKey(dish)) {
             notifyUpdate("dish quantity in basket updated", basket.get(dish), newQuantity);
@@ -71,15 +85,19 @@ public class Order extends Model implements Serializable {
         }
     }
 
+    /**
+     * Clears the contents of the order/basket.
+     */
     public void clear() {
-        //Use of .clone() is usually discouraged because when used incorrectly it can cause problems,
-        //but in this case we just want to copy the basket object by value and not reference before clearing it.
-        //So the usual reasons for avoiding it do not apply.
-        HashMap<Dish, Integer> oldBasket = (HashMap<Dish, Integer>) basket.clone();
         basket.clear();
-        notifyUpdate("cleared basket", oldBasket, basket);
+        notifyUpdate();
     }
 
+    /**
+     * Checks if a Dish is included in an order
+     * @param dish : Dish to check
+     * @return True if dish is present. False if dish is not present.s
+     */
     public boolean containsDish(Dish dish) {
         if (basket.containsKey(dish)) {
             return true;
@@ -147,10 +165,18 @@ public class Order extends Model implements Serializable {
         this.basket = newOrderData;
     }
 
+    /**
+     * Updates the order's OrderState to indicate that it has been cancelled.
+     */
     public void cancelOrder() {
         setOrderState(OrderState.CANCELLED);
     }
 
+    /**
+     * Called by the Drone to deliver the order. Delays the drone's thread for the amount of time it takes to deliver the order
+     * @param flyingSpeed : Speed that the drone flies at
+     * @throws InterruptedException : If the drone's delivery is interrupted.
+     */
     public synchronized void deliverOrder(int flyingSpeed) throws InterruptedException {
         float sleepSeconds = ((float) user.getPostcode().getDistance() * 200) / flyingSpeed;
         Thread.sleep((long) (1000*sleepSeconds));
@@ -187,20 +213,37 @@ public class Order extends Model implements Serializable {
         return this.user;
     }
 
+    /**
+     * Sets the state of the Order to an OrderState enum value
+     * @param state : New state of the order
+     */
     public void setOrderState(OrderState state) {
         notifyUpdate("state", this.state, state);
         this.state = state;
 
     }
 
+    /**
+     * Gets the order number for the given user. This is only unique to that user, not overall.
+     * Eg: If I order a dish, then another person orders a dish, there will be two orders with orderNumber=0.
+     * @return : Integer Order Number for that user's orders.
+     */
     public int getUserOrderNum() {
         return this.orderNumber;
     }
 
+    /**
+     * Gets the state of the Order represented as OrderState enum value.
+     * @return : OrderState enum value
+     */
     public OrderState getOrderState() {
         return this.state;
     }
 
+    /**
+     * Gets a string representation of the Order
+     * @return : String of order's content
+     */
     @Override
     public String getName() {
         return this.toString();

@@ -33,6 +33,10 @@ public class CommsClientHandler extends Thread {
         this.running = true;
     }
 
+    /**
+     * Thread that establishes the connection with the client and performs the handshake.
+     * Then continues to read any messages received from the Client and stores them in a Queue.
+     */
     @Override
     public void run() {
         Object receivedPayload;
@@ -90,6 +94,12 @@ public class CommsClientHandler extends Thread {
         return this.clientUID;
     }
 
+    /**
+     * Sends a Message to the Client
+     * @param message : Message to send
+     * @return : Boolean, True if sent without errors, False if not.
+     * @throws InvalidMessageException : Thrown if a null message is attempted to be sent.
+     */
     public boolean sendMessage(Message message) throws InvalidMessageException {
         if (message == null) {
             throw new InvalidMessageException("Attempted to send message to client with null content");
@@ -104,6 +114,10 @@ public class CommsClientHandler extends Thread {
         }
     }
 
+    /**
+     * Returns any new messages received from the Client
+     * @return : Message object from the Client
+     */
     public Message receiveMessage() {
         synchronized (messages) {
             if (!messages.isEmpty()) {
@@ -114,10 +128,17 @@ public class CommsClientHandler extends Thread {
         return null;
     }
 
+    /**
+     * Returns whether the message receiving functionality is running.
+     * @return : True if it is, False if it is not.
+     */
     public boolean isRunning() {
         return running;
     }
 
+    /**
+     * Cancels this communication thread if a new Configuration is loaded on the Server
+     */
     public void cancelThread() {
         this.running = false;
     }

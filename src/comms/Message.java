@@ -50,6 +50,10 @@ public class Message implements Serializable {
         return this.connectionUID;
     }
 
+    /**
+     * Used to set the message's UID field, this stores the UID the message was from or being sent to.
+     * @param uid : UID of client that sent the message, or the client to send the message to.
+     */
     public void setConnectionUID(int uid) {
         this.connectionUID = uid;
     }
