@@ -32,14 +32,12 @@ public class CommsClient extends Thread implements Comms {
      * @param client ClientInterface instance
      * @param port Port to start the connection on
      */
-    public CommsClient(ClientInterface client, int port) {
+    public CommsClient(ClientInterface client, int port, InetAddress serverAddress) {
         this.client = client;
 
         try {
-            //Gets the localhost IP address
-            InetAddress localIP = InetAddress.getLocalHost();
-            //Opens a socket on this IP
-            socket = new Socket(localIP, port);
+            //Opens a socket on the specified IP and port
+            socket = new Socket(serverAddress, port);
             if (socket.isConnected()) {
                 running = true;
                 System.out.println("Client connected to server!");

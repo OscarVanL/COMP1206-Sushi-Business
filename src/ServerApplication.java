@@ -18,6 +18,8 @@ import java.util.Map;
 public class ServerApplication extends Thread implements ServerInterface {
 
     private static volatile boolean running = true;
+    private static String configFile = "ConfigurationExample.txt";
+    private static int portNumber;
     private Configuration config;
     private DataPersistence backup;
     private static CommsServer communication;
@@ -38,6 +40,12 @@ public class ServerApplication extends Thread implements ServerInterface {
     public static boolean dishesRestocked = true;
 
     public static void main(String args[]) {
+        if (args.length == 1) {
+            portNumber = Integer.parseInt(args[0]);
+        } else if (args.length == 2) {
+            portNumber = Integer.parseInt(args[0]);
+            configFile = args[1];
+        }
         ServerInterface serverInterface = initialise();
         ServerApplication app = (ServerApplication) serverInterface;
         app.launchGUI(serverInterface);
@@ -69,7 +77,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     private static ServerInterface initialise() {
         ServerApplication app = new ServerApplication();
-        app.loadConfiguration("ConfigurationExample.txt");
+        app.loadConfiguration(configFile);
         return app;
     }
 
@@ -87,7 +95,7 @@ public class ServerApplication extends Thread implements ServerInterface {
      */
     private void startComms() {
         try {
-            Thread commsThread = new CommsServer(5000);
+            Thread commsThread = new CommsServer(portNumber);
             communication = (CommsServer) commsThread;
             commsThread.start();
             running = true;

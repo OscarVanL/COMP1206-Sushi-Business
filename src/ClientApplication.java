@@ -5,6 +5,8 @@ import comms.CommsClient;
 import comms.Message;
 import comms.MessageType;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +20,8 @@ import static java.lang.Thread.sleep;
 public class ClientApplication implements ClientInterface {
 
     //public static boolean ready = false;
+    private static int portNumber;
+    private static InetAddress serverAddress;
     private static ClientWindow clientWindow;
     private static CommsClient comms;
     private User connectedUser;
@@ -30,13 +34,25 @@ public class ClientApplication implements ClientInterface {
      * @param args Launch arguments (not used)
      */
     public static void main(String args[]) {
+        try {
+            if (args.length == 1) {
+                portNumber = Integer.parseInt(args[0]);
+                serverAddress = InetAddress.getLocalHost();
+            } else if (args.length == 2) {
+                portNumber = Integer.parseInt(args[0]);
+                serverAddress = InetAddress.getByName(args[1]);
+            }
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
         ClientInterface clientInterface = initialise();
         ClientApplication app = (ClientApplication) clientInterface;
 
         new Thread(() -> {
             synchronized (app) {
                 System.out.println("launching comms");
-                comms = new CommsClient(app, 5000);
+                comms = new CommsClient(app, portNumber, serverAddress);
             }
         }).start();
 
