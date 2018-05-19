@@ -113,10 +113,7 @@ public class CommsServer extends Thread implements Comms {
             CommsClientHandler client = (CommsClientHandler) thread;
             message = client.receiveMessage();
             if (message != null) {
-                System.out.println("Received message in CommsServer");
                 return message;
-            } else {
-                System.out.println("Received message contained null.");
             }
         }
         return null;
