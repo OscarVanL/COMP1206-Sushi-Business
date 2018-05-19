@@ -9,7 +9,8 @@ Full specification for the Coursework can be found in the repository or [here](h
 3. Compile source with `javac *.java` (A warning about unchecked operations will show up, this is fine)
 ### Local use
 4. Run the Server Application with `java ServerApplication`
-5. Run the Client Application with`java ClientApplication`
+5. Open another instance of your CLI, leaving the server running.
+6. Run the Client Application with`java ClientApplication`
 ### Remote use
 4. Run the Server Application with `java ServerApplication PORT` where PORT is the desired connection port.
 5. Run the Client Application with `java ClientConnection PORT SERVERADDRESS` where PORT matches the server's port and SERVERADDRESS is the remote address/IP where the server is located.
@@ -25,3 +26,11 @@ Full specification for the Coursework can be found in the repository or [here](h
 `java ClientApplication PORT SERVERADDRESS`
 * The server's port can be specified. Note that the client and server's port must match.
 * The remote address where the server is hosted can be specified. By default localhost is used.
+
+## Bugs
+
+This is by no means reliable, it's my first project utilising Sockets or Threads and honestly it was quite a challenge - I'm sure the communication or Thread controls are not done to the book. 
+
+The client will sometimes hang when Checking out an order. 
+
+I've never tested the application where the server is remote (rather than localhost), so couldn't speak for the reliability of the connection over a slow network (I'm expecting it won't work).
