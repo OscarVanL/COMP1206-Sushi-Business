@@ -42,7 +42,6 @@ public class Drone extends Model implements Runnable {
                 try {
                     stockManager.restockIngredient(toRestock, flyingSpeed);
                 } catch (InterruptedException e) {
-                    System.out.println("Drone restocking interrupted");
                     break;
                 }
                 currentlyRestocking = "";
@@ -61,7 +60,6 @@ public class Drone extends Model implements Runnable {
                         setDroneState(DroneState.IDLE);
                         notifyUpdate();
                     } catch (InterruptedException e) {
-                        System.out.println("Drone delivery interrupted");
                         break;
                     }
                 }

@@ -297,7 +297,6 @@ public class StockManager implements Serializable {
         for (Ingredient ingredient : dish.getDishIngredients()) {
             //If there is not enough stock of ingredient required to make the dishes, return false.
             if (ingredientStock.get(ingredient).getStock() < (dish.getQuantity(ingredient) * dishesToMake)) {
-                System.out.println("There is not enough " + ingredient.getName() + " in stock to make " + dishesToMake + " dishes.");
                 canMake = false;
             }
         }

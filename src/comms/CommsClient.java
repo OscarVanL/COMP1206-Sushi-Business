@@ -43,14 +43,10 @@ public class CommsClient extends Thread implements Comms {
                 System.out.println("Client connected to server!");
 
                 out = new ObjectOutputStream(socket.getOutputStream());
-                System.out.println("Socket output setup");
-
                 in = new ObjectInputStream(socket.getInputStream());
-                System.out.println("Socket input setup");
                 //Passes the hashCode of the ClientInterface to act as a UID so that the server knows what client it's talking to.
                 if (firstMessage) {
                     out.writeObject(client.hashCode());
-                    System.out.println("sent hashcode");
                     out.flush();
                     firstMessage = false;
                 }
@@ -105,10 +101,8 @@ public class CommsClient extends Thread implements Comms {
     private void startServerNotifyCheck() {
         new Thread(() -> {
             while (running) {
-                System.out.print("");
                 if (newUpdateNotify) {
                     client.notifyUpdate();
-                    System.out.println("Updated client GUI as requested by server.");
                     newUpdateNotify = false;
                 }
             }
@@ -132,7 +126,6 @@ public class CommsClient extends Thread implements Comms {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Sent invalid message type that wasn't of type 'Message'");
             try {
                 throw new InvalidMessageException("Sent invalid message type that wasn't of type 'Message'");
             } catch (InvalidMessageException e) {

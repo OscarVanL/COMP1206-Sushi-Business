@@ -31,8 +31,8 @@ public class Dish extends Model implements Serializable {
      * @param amount : Units of this ingredient required
      */
     public void addIngredient(Ingredient ingredient, Number amount) {
+        //Ingredient is already present in dish, so updates the amount instead,
         if (ingredientAmounts.containsKey(ingredient)) {
-            System.out.println("Ingredient already present in dish. Amount required updated");
             setQuantity(ingredient, amount.longValue());
         } else {
             notifyUpdate("Ingredient added", null, ingredient);

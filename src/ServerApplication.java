@@ -19,7 +19,7 @@ public class ServerApplication extends Thread implements ServerInterface {
 
     private static volatile boolean running = true;
     private static String configFile = "ConfigurationExample.txt";
-    private static int portNumber;
+    private static int portNumber = 5000;
     private Configuration config;
     private DataPersistence backup;
     private static CommsServer communication;
@@ -57,15 +57,11 @@ public class ServerApplication extends Thread implements ServerInterface {
     @Override
     public void run() {
         while (running) {
-            System.out.print("");
             if (communication.getMessageStatus()) {
                 Message message = communication.receiveMessage();
                 communication.setMessageStatus(false);
-                System.out.println("Message received in serverApplication run()");
                 if (message != null) {
                     processMessage(message);
-                } else {
-                    System.out.println("But message contents was null");
                 }
             }
         }
@@ -223,7 +219,6 @@ public class ServerApplication extends Thread implements ServerInterface {
     @Override
     public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
         Dish newDish = new Dish(name, description, price, stockManager);
-        System.out.println("New dish added: " + name);
         try {
             StockItem newDishStock = new StockItem(newDish, 0, restockThreshold, restockAmount);
             stockManager.addDish(newDish, newDishStock);
@@ -896,7 +891,6 @@ public class ServerApplication extends Thread implements ServerInterface {
         int uid = message.getConnectionUID();
         Message reply;
         if (this.getPostcodes() == null) {
-            System.out.println("Postcodes not yet initialised...");
             reply = new Message(MessageType.POSTCODES, new ArrayList<Postcode>());
         } else {
             reply = new Message(MessageType.POSTCODES, (ArrayList<Postcode>) this.getPostcodes());

@@ -20,7 +20,7 @@ import static java.lang.Thread.sleep;
 public class ClientApplication implements ClientInterface {
 
     //public static boolean ready = false;
-    private static int portNumber;
+    private static int portNumber = 5000;
     private static InetAddress serverAddress;
     private static ClientWindow clientWindow;
     private static CommsClient comms;
@@ -35,7 +35,9 @@ public class ClientApplication implements ClientInterface {
      */
     public static void main(String args[]) {
         try {
-            if (args.length == 1) {
+            if (args.length == 0) {
+                serverAddress = InetAddress.getLocalHost();
+            } else if (args.length == 1) {
                 portNumber = Integer.parseInt(args[0]);
                 serverAddress = InetAddress.getLocalHost();
             } else if (args.length == 2) {
@@ -51,7 +53,7 @@ public class ClientApplication implements ClientInterface {
 
         new Thread(() -> {
             synchronized (app) {
-                System.out.println("launching comms");
+                System.out.println("Connecting Client to address " + serverAddress.toString() + ":" + portNumber);
                 comms = new CommsClient(app, portNumber, serverAddress);
             }
         }).start();
@@ -80,7 +82,7 @@ public class ClientApplication implements ClientInterface {
      * @return ClientWIndow instance.
      */
     private ClientWindow launchGUI(ClientInterface clientInterface) {
-        System.out.println("entered launchGUI");
+        System.out.println("Launching client GUI");
         synchronized (this) {
             if (comms != null) {
                 while (!comms.initialised()) {

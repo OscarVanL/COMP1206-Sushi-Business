@@ -40,14 +40,13 @@ public class CommsServer extends Thread implements Comms {
             }
 
             Socket socket;
-            System.out.println("Waiting for a connection");
-
             try {
                 //Socket object receives incoming client requests, this is blocked until a client is connected
                 socket = serverSocket.accept();
                 System.out.println("A client has connected");
 
-                System.out.println("Assigning thread to this client");
+                //Creates new thread for this client connection so that this thread is able to continue accepting
+                //new connections.
                 Thread thread = new CommsClientHandler(socket, this);
                 clientConnection.put(thread, socket);
                 thread.start();

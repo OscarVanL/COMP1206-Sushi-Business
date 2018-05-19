@@ -56,7 +56,7 @@ public class DataPersistence extends Thread {
 
             List<String> restaurantState = parseToStrings();
             String filePath = "Sushi-Backup-" + new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".txt";
-            System.out.println("Backing up to: " + filePath);
+            System.out.println("Backing up current Configuration to: " + filePath);
 
             try {
                 FileWriter writer = new FileWriter(new File(filePath));
@@ -68,7 +68,7 @@ public class DataPersistence extends Thread {
             } catch (IOException e) {
                 this.backupsRunning = false;
                 e.printStackTrace();
-                System.out.println("IOException thrown when writing backup. Disabling backup creation");
+                System.out.println("IOException thrown when writing backup. Disabling further backup creation");
             }
 
         }
@@ -86,7 +86,6 @@ public class DataPersistence extends Thread {
                 if (aFilesInFolder.isFile() && aFilesInFolder.getName().contains("Sushi-Backup")) {
                     numBackups++;
                 }
-            System.out.println("Number of existing backups: " + numBackups);
         }
 
         return numBackups;

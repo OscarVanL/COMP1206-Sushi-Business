@@ -177,7 +177,7 @@ public class Order extends Model implements Serializable {
         float sleepSeconds = ((float) user.getPostcode().getDistance() * 200) / flyingSpeed;
         Thread.sleep((long) (1000*sleepSeconds));
         setOrderState(OrderState.COMPLETE);
-        System.out.println("Delivered order in " + sleepSeconds + " seconds.");
+        System.out.println("Drone delivered " + user.getName() + "'s order in " + sleepSeconds + " seconds.");
     }
 
     /**

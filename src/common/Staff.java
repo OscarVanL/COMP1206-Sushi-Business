@@ -36,7 +36,6 @@ public class Staff extends Model implements Runnable {
     public void run() {
         Dish toRestock;
         while(threadRunning) {
-            System.out.println(getName() + ": ");
             //Finds any dishes that need to be restocked (returns null if there are none)
             toRestock = findDishToRestock();
             if (toRestock != null) {
@@ -46,7 +45,6 @@ public class Staff extends Model implements Runnable {
                 try {
                     stockManager.restockDish(toRestock);
                 } catch (InterruptedException e) {
-                    System.out.println("Staff restocking interrupted");
                     break;
                 }
                 currentlyMaking = "";
@@ -60,7 +58,6 @@ public class Staff extends Model implements Runnable {
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
-                System.out.println("Staff break interrupted");
                 break;
             }
         }
@@ -117,7 +114,6 @@ public class Staff extends Model implements Runnable {
         //Goes through orders, if there are enough of a stocked dish then its state is updated, otherwise it is cooked.
         for (Order order : orders) {
             if (order.getOrderState() == Order.OrderState.PREPARING) {
-                System.out.println("Checking order: " + order.toString());
                 try {
                     HashMap<Dish, Number> orderContent = order.getBasket();
                     boolean orderReady = true;

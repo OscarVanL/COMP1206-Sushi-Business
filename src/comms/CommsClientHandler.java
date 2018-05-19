@@ -40,26 +40,22 @@ public class CommsClientHandler extends Thread {
     public void run() {
         Object receivedPayload;
         while (running) {
-            System.out.println("entered while true");
             try {
                 //If this is the first thing we've received, it's the client telling us its UID, so store this.
                 if (firstPayload) {
-
-                    System.out.println("reading from client");
+                    System.out.println("Waiting for first message from client");
                     receivedPayload = in.readObject();
                     clientUID = (int) receivedPayload;
-                    System.out.println("received client UID: " + clientUID);
+                    System.out.println("Conncted to Client UID: " + clientUID);
 
                     firstPayload = false;
 
                 } else {
-                    System.out.println("waiting for message");
                     Message received;
                     try {
                         received = (Message) in.readObject();
-                        System.out.println("received message");
                     } catch (SocketException e) {
-                        System.out.println("Client has disconnected.");
+                        System.out.println("Client " + this.getUID() + " has disconnected.");
                         out.close();
                         in.close();
                         socket.close();
@@ -69,7 +65,6 @@ public class CommsClientHandler extends Thread {
                     }
 
                     if (received != null) {
-                        System.out.println("Received message!");
                         received.setConnectionUID(clientUID);
                         synchronized (messages) {
                             messages.add(received);

@@ -29,7 +29,6 @@ public class Server implements ServerInterface {
      * @param user : newly created User
      */
     public void addUser(User user) {
-        System.out.println("user added");
         users.add(user);
         server.notifyUpdate();
     }
